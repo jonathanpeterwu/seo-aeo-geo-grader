@@ -1,0 +1,80 @@
+import { NextRequest, NextResponse } from "next/server"
+import { fetchPageData } from "@/lib/fetcher"
+import { extractMetaTags } from "@/lib/parsers/meta"
+import { extractSchemaData } from "@/lib/parsers/schema"
+import { analyzeRobotsTxt } from "@/lib/parsers/robots"
+import { analyzeSitemap } from "@/lib/parsers/sitemap"
+import { analyzeContent } from "@/lib/parsers/content"
+import { gradeUrl } from "@/lib/grader"
+import { canAnalyze, consumeCredit, getRemaining, isHomePageUrl } from "@/lib/credits"
+
+export async function POST(req: NextRequest) {
+  try {
+    const body = await req.json()
+    const { url, sessionId } = body as { url: string; sessionId: string }
+
+    if (!url || !sessionId) {
+      return NextResponse.json(
+        { error: "url and sessionId are required" },
+        { status: 400 }
+      )
+    }
+
+    // Validate URL
+    let parsedUrl: URL
+    try {
+      parsedUrl = new URL(url)
+      if (!["http:", "https:"].includes(parsedUrl.protocol)) {
+        throw new Error("Invalid protocol")
+      }
+    } catch {
+      return NextResponse.json({ error: "Invalid URL" }, { status: 400 })
+    }
+
+    // Check credits
+    if (!canAnalyze(sessionId, url)) {
+      return NextResponse.json(
+        {
+          error: "No credits remaining. Home page analysis is free. Additional pages require credits.",
+          creditsRemaining: getRemaining(sessionId),
+        },
+        { status: 403 }
+      )
+    }
+
+    // Fetch page data
+    const data = await fetchPageData(parsedUrl.toString())
+
+    if (!data.html) {
+      return NextResponse.json(
+        { error: "Could not fetch the page. Please check the URL and try again." },
+        { status: 422 }
+      )
+    }
+
+    // Parse
+    const meta = extractMetaTags(data.html)
+    const schema = extractSchemaData(data.html)
+    const robots = analyzeRobotsTxt(data.robotsTxt)
+    const sitemap = analyzeSitemap(data.sitemapXml)
+    const content = analyzeContent(data.html, data.resolvedUrl)
+
+    // Grade
+    const report = gradeUrl(data.resolvedUrl, meta, schema, content, robots, sitemap)
+
+    // Consume credit
+    consumeCredit(sessionId, url)
+
+    return NextResponse.json({
+      report,
+      creditsRemaining: getRemaining(sessionId),
+      isHomePage: isHomePageUrl(url),
+    })
+  } catch (err) {
+    console.error("Analysis error:", err)
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    )
+  }
+}

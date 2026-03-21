@@ -82,13 +82,11 @@ export default function ReportDashboard({
               {report.overallPercentage}%
             </div>
             <div className="text-sm opacity-75">
-              {report.overallPassed}/{report.overallTotal} checks passed
+              {report.overallScore}/{report.overallMaxScore} points
             </div>
           </div>
         </div>
-        <p className="mt-3 text-sm text-gray-500 break-all">
-          {report.url}
-        </p>
+        <p className="mt-3 text-sm text-gray-500 break-all">{report.url}</p>
       </div>
 
       {/* Category Cards */}
@@ -101,6 +99,9 @@ export default function ReportDashboard({
             <div className="mb-3 flex items-center justify-between">
               <h3 className="text-lg font-semibold text-gray-900">
                 {cat.category}
+                <span className="ml-1 text-sm font-normal text-gray-500">
+                  {cat.score}/{cat.maxScore}pt
+                </span>
               </h3>
               <span
                 className={`rounded-md border px-2 py-1 text-sm font-bold ${GRADE_STYLES[cat.grade]}`}
@@ -109,23 +110,47 @@ export default function ReportDashboard({
               </span>
             </div>
             <div className="space-y-2">
-              {cat.checks.map((check) => (
-                <div key={check.id} className="flex items-start gap-2">
-                  <span
-                    className={`mt-0.5 text-sm font-bold ${check.passed ? "text-green-500" : "text-red-500"}`}
-                  >
-                    {check.passed ? "\u2713" : "\u2717"}
-                  </span>
-                  <div className="flex-1">
-                    <div className="text-sm font-medium text-gray-800">
-                      {check.name}
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      {check.details}
+              {cat.checks.map((check) => {
+                const isFull = check.score === check.maxScore
+                const isPartial =
+                  check.score > 0 && check.score < check.maxScore
+                return (
+                  <div key={check.id} className="flex items-start gap-2">
+                    <span
+                      className={`mt-0.5 text-sm font-bold ${
+                        isFull
+                          ? "text-green-500"
+                          : isPartial
+                            ? "text-amber-500"
+                            : "text-red-500"
+                      }`}
+                    >
+                      {isFull ? "\u2713" : isPartial ? "\u25CB" : "\u2717"}
+                    </span>
+                    <div className="flex-1">
+                      <div className="flex items-baseline justify-between text-sm">
+                        <span className="font-medium text-gray-800">
+                          {check.name}
+                        </span>
+                        <span
+                          className={`ml-2 text-xs font-semibold ${
+                            isFull
+                              ? "text-green-600"
+                              : isPartial
+                                ? "text-amber-600"
+                                : "text-red-400"
+                          }`}
+                        >
+                          {check.score}/{check.maxScore}
+                        </span>
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {check.details}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           </div>
         ))}
@@ -137,7 +162,6 @@ export default function ReportDashboard({
           Export Report
         </h3>
         <div className="flex flex-col gap-4 sm:flex-row">
-          {/* Download PDF */}
           <button
             onClick={handleDownloadPdf}
             disabled={downloading}
@@ -146,7 +170,6 @@ export default function ReportDashboard({
             {downloading ? "Generating..." : "Download PDF"}
           </button>
 
-          {/* Email Report */}
           <form onSubmit={handleEmailReport} className="flex flex-1 gap-2">
             <input
               type="email"

@@ -43,14 +43,14 @@ export async function sendReport(
           </span>
           <br/>
           <span style="font-size: 18px; color: #6b7280;">
-            ${report.overallPercentage}% — ${report.overallPassed}/${report.overallTotal} checks passed
+            ${report.overallPercentage}% — ${report.overallScore}/${report.overallMaxScore} points
           </span>
         </div>
         ${report.categories
           .map(
             (c) => `
           <div style="margin: 10px 0; padding: 10px; background: #f9fafb; border-radius: 8px;">
-            <strong>${c.category}</strong>: ${c.grade} (${c.percentage}%) — ${c.passed}/${c.total} checks
+            <strong>${c.category}</strong>: ${c.grade} (${c.percentage}%) — ${c.score}/${c.maxScore} pts
           </div>
         `
           )

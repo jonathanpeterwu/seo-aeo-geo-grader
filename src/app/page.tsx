@@ -127,15 +127,15 @@ export default function Home() {
       {!report && !loading && (
         <div className="mt-12 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
           <h2 className="mb-4 text-xl font-semibold text-gray-900">
-            Scoring Rubric — 12 Checks, 100%
+            Scoring Rubric — 21pt Weighted
           </h2>
 
           <div className="mb-6 grid grid-cols-4 gap-3 text-center text-sm">
             {[
-              { grade: "A", range: "≥ 90%", checks: "11-12", color: "text-green-600 bg-green-50 border-green-200" },
-              { grade: "B", range: "≥ 75%", checks: "9-10", color: "text-blue-600 bg-blue-50 border-blue-200" },
-              { grade: "C", range: "≥ 58%", checks: "7-8", color: "text-amber-600 bg-amber-50 border-amber-200" },
-              { grade: "D", range: "< 58%", checks: "≤ 6", color: "text-red-600 bg-red-50 border-red-200" },
+              { grade: "A", range: "≥ 90%", pts: "≥19pt", color: "text-green-600 bg-green-50 border-green-200" },
+              { grade: "B", range: "≥ 75%", pts: "≥16pt", color: "text-blue-600 bg-blue-50 border-blue-200" },
+              { grade: "C", range: "≥ 58%", pts: "≥13pt", color: "text-amber-600 bg-amber-50 border-amber-200" },
+              { grade: "D", range: "< 58%", pts: "<13pt", color: "text-red-600 bg-red-50 border-red-200" },
             ].map((g) => (
               <div
                 key={g.grade}
@@ -143,32 +143,32 @@ export default function Home() {
               >
                 <div className="text-2xl font-bold">{g.grade}</div>
                 <div className="font-medium">{g.range}</div>
-                <div className="text-xs opacity-75">{g.checks} checks</div>
+                <div className="text-xs opacity-75">{g.pts}</div>
               </div>
             ))}
           </div>
 
           <div className="space-y-4 text-sm text-gray-700">
             <div>
-              <h3 className="font-semibold text-gray-900">SEO — 4 checks</h3>
-              <p>Title tag, Meta description, robots.txt, XML Sitemap</p>
+              <h3 className="font-semibold text-gray-900">SEO — 7pt</h3>
+              <p>Title (2), Meta description (2), robots.txt (2), XML Sitemap (1)</p>
             </div>
             <div>
-              <h3 className="font-semibold text-gray-900">AEO — 4 checks</h3>
+              <h3 className="font-semibold text-gray-900">AEO — 5pt</h3>
               <p>
-                JSON-LD structured data, Open Graph tags, Canonical URL,
-                FAQ/Speakable Schema
+                JSON-LD structured data (2), Open Graph tags (1),
+                FAQ/Speakable schema (2, partial 1 if &lt;3 FAQs)
               </p>
             </div>
             <div>
-              <h3 className="font-semibold text-gray-900">CTA — 1 check</h3>
+              <h3 className="font-semibold text-gray-900">CTA — 1pt</h3>
               <p>Clear call-to-action present on page</p>
             </div>
             <div>
-              <h3 className="font-semibold text-gray-900">GEO — 3 checks</h3>
+              <h3 className="font-semibold text-gray-900">GEO — 8pt</h3>
               <p>
-                Content depth (≥1200 words), Links (≥3 total), Clean copy (no
-                banned AI words)
+                Links (3, tiered: ≥5/≥3/&gt;0), Clean copy (2),
+                Content depth ≥1,200w (1), Statistics (1), H2 headings ≥3 (1)
               </p>
             </div>
           </div>

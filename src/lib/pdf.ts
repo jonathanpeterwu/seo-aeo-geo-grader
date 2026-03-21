@@ -9,6 +9,7 @@ const COLORS: Record<string, RGB> = {
   C: [245, 158, 11],
   D: [239, 68, 68],
   pass: [34, 197, 94],
+  partial: [245, 158, 11],
   fail: [239, 68, 68],
   text: [31, 41, 55],
   muted: [107, 114, 128],
@@ -61,7 +62,7 @@ export function generatePdf(report: AnalysisReport): Buffer {
   doc.setFontSize(11)
   setColor(doc, COLORS.text)
   doc.text(
-    `${report.overallPassed} of ${report.overallTotal} checks passed`,
+    `${report.overallScore} / ${report.overallMaxScore} points`,
     margin,
     y
   )
@@ -91,7 +92,7 @@ export function generatePdf(report: AnalysisReport): Buffer {
 
     doc.setFontSize(14)
     setColor(doc, COLORS.heading)
-    doc.text(`${cat.category}`, margin, y)
+    doc.text(`${cat.category} (${cat.score}/${cat.maxScore})`, margin, y)
 
     setColor(doc, catGradeColor)
     doc.text(
@@ -103,15 +104,17 @@ export function generatePdf(report: AnalysisReport): Buffer {
 
     for (const check of cat.checks) {
       checkPageBreak(12)
-      const icon = check.passed ? "\u2713" : "\u2717"
-      const color = check.passed ? COLORS.pass : COLORS.fail
+      const isFull = check.score === check.maxScore
+      const isPartial = check.score > 0 && check.score < check.maxScore
+      const icon = isFull ? "\u2713" : isPartial ? "\u25CB" : "\u2717"
+      const color = isFull ? COLORS.pass : isPartial ? COLORS.partial : COLORS.fail
 
       doc.setFontSize(10)
       setColor(doc, color)
       doc.text(icon, margin + 2, y)
 
       setColor(doc, COLORS.text)
-      doc.text(check.name, margin + 8, y)
+      doc.text(`${check.name} (${check.score}/${check.maxScore})`, margin + 8, y)
 
       doc.setFontSize(8)
       setColor(doc, COLORS.muted)
@@ -125,7 +128,7 @@ export function generatePdf(report: AnalysisReport): Buffer {
   }
 
   // Rubric section
-  checkPageBreak(60)
+  checkPageBreak(80)
   y += 5
   doc.setDrawColor(229, 231, 235)
   doc.line(margin, y, pageWidth - margin, y)
@@ -133,19 +136,17 @@ export function generatePdf(report: AnalysisReport): Buffer {
 
   doc.setFontSize(14)
   setColor(doc, COLORS.heading)
-  doc.text("Scoring Rubric", margin, y)
+  doc.text("Scoring Rubric \u2014 21pt Weighted", margin, y)
   y += 7
 
   const rubricLines = [
-    "12 checks across 4 categories:",
+    "SEO  (7pt): Title 2, Meta description 2, robots.txt 2, XML Sitemap 1",
+    "AEO  (5pt): JSON-LD 2, Open Graph 1, FAQ/Speakable 2 (partial 1)",
+    "CTA  (1pt): Call-to-action present 1",
+    "GEO  (8pt): Links 3 (tiered \u22655/\u22653/>0), Clean copy 2, Depth 1, Stats 1, H2s 1",
     "",
-    "SEO (4): Title tag, Meta description, robots.txt, XML Sitemap",
-    "AEO (4): JSON-LD, Open Graph, Canonical URL, FAQ/Speakable Schema",
-    "CTA (1): Call-to-action present",
-    "GEO (3): Content depth (\u22651200 words), Links (\u22653), Clean copy",
-    "",
-    "Grade = (checks passed / 12) \u00D7 100%",
-    "A \u2265 90% (11-12)  |  B \u2265 75% (9-10)  |  C \u2265 58% (7-8)  |  D < 58% (\u22646)",
+    "Grade = (points / 21) \u00D7 100%",
+    "A \u2265 90%  |  B \u2265 75%  |  C \u2265 58%  |  D < 58%",
   ]
 
   doc.setFontSize(9)

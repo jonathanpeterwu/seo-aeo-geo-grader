@@ -8,6 +8,8 @@ export interface CheckResult {
   id: string
   name: string
   category: "SEO" | "AEO" | "CTA" | "GEO"
+  score: number
+  maxScore: number
   passed: boolean
   details: string
 }
@@ -15,8 +17,8 @@ export interface CheckResult {
 export interface CategoryGrade {
   category: "SEO" | "AEO" | "CTA" | "GEO"
   checks: CheckResult[]
-  passed: number
-  total: number
+  score: number
+  maxScore: number
   percentage: number
   grade: "A" | "B" | "C" | "D"
 }
@@ -25,8 +27,8 @@ export interface AnalysisReport {
   url: string
   analyzedAt: string
   categories: CategoryGrade[]
-  overallPassed: number
-  overallTotal: number
+  overallScore: number
+  overallMaxScore: number
   overallPercentage: number
   overallGrade: "A" | "B" | "C" | "D"
 }
@@ -53,6 +55,7 @@ export interface SchemaData {
   hasFaq: boolean
   hasSpeakable: boolean
   hasSoftwareApp: boolean
+  faqCount: number
 }
 
 export interface ContentAnalysis {
@@ -63,6 +66,8 @@ export interface ContentAnalysis {
   ctaFound: boolean
   bannedWords: string[]
   bannedWordCount: number
+  h2Count: number
+  statsCount: number
 }
 
 export interface RobotsAnalysis {

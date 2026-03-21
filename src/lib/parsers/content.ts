@@ -1,32 +1,45 @@
 import * as cheerio from "cheerio"
 import { ContentAnalysis } from "@/types"
 
+// Matches score-seo.mjs banned word list
 const BANNED_WORDS = [
   "seamlessly",
   "robust",
   "leverage",
-  "synergy",
   "delve",
-  "tapestry",
+  "journey",
+  "navigate",
   "landscape",
-  "unleash",
+  "foster",
+  "tapestry",
+  "elevate",
+  "unlock",
   "empower",
-  "holistic",
-  "paradigm",
-  "revolutionize",
-  "cutting-edge",
-  "game-changer",
-  "best-in-class",
-  "next-generation",
-  "world-class",
-  "state-of-the-art",
-  "in today's digital age",
-  "in today's fast-paced world",
-  "it's important to note",
-  "at the end of the day",
-  "dive into",
-  "navigate the complexities",
+  "paramount",
+  "vibrant",
+  "multifaceted",
+  "comprehensive",
+  "pivotal",
+  "testament",
+  "beacon",
+  "orchestrate",
+  "reimagine",
+  "bespoke",
+  "meticulous",
+  "bustling",
+  "whimsical",
+  "enigma",
+  "indelible",
+  "supercharge",
+  "profound",
+  "furthermore",
+  "indeed",
+  "certainly",
+  "firstly",
+  "synergy",
 ]
+
+const BANNED_RE = new RegExp(`\\b(${BANNED_WORDS.join("|")})\\b`, "gi")
 
 const CTA_PATTERNS = [
   /sign\s*up/i,
@@ -51,13 +64,14 @@ export function analyzeContent(
 ): ContentAnalysis {
   const $ = cheerio.load(html)
 
+  // Count h2s before removing elements
+  const h2Count = $("h2").length
+
   // Remove non-content elements
   $("script, style, nav, header, footer, noscript, svg, iframe").remove()
 
   const bodyText = $("body").text()
-  const words = bodyText
-    .split(/\s+/)
-    .filter((w) => w.length > 0)
+  const words = bodyText.split(/\s+/).filter((w) => w.length > 0)
   const wordCount = words.length
 
   // Count links
@@ -81,8 +95,11 @@ export function analyzeContent(
         externalLinks++
       }
     } catch {
-      // relative links count as internal
-      if (href.startsWith("/") || href.startsWith("#") || href.startsWith(".")) {
+      if (
+        href.startsWith("/") ||
+        href.startsWith("#") ||
+        href.startsWith(".")
+      ) {
         internalLinks++
       }
     }
@@ -98,14 +115,13 @@ export function analyzeContent(
     }
   }
 
-  // Banned word detection
-  const lowerText = bodyText.toLowerCase()
-  const foundBanned: string[] = []
-  for (const word of BANNED_WORDS) {
-    if (lowerText.includes(word.toLowerCase())) {
-      foundBanned.push(word)
-    }
-  }
+  // Banned word detection (unique matches, like score-seo.mjs)
+  const matches = bodyText.match(BANNED_RE) || []
+  const foundBanned = [...new Set(matches.map((w) => w.toLowerCase()))]
+
+  // Stats detection: percentages, dollar amounts, multipliers
+  const statsMatches = bodyText.match(/\d+%|\$[\d,]+k?\b|\d+x\b/g) || []
+  const statsCount = statsMatches.length
 
   return {
     wordCount,
@@ -115,5 +131,7 @@ export function analyzeContent(
     ctaFound,
     bannedWords: foundBanned,
     bannedWordCount: foundBanned.length,
+    h2Count,
+    statsCount,
   }
 }

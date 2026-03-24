@@ -5,6 +5,10 @@ import { extractSchemaData } from "@/lib/parsers/schema"
 import { analyzeRobotsTxt } from "@/lib/parsers/robots"
 import { analyzeSitemap } from "@/lib/parsers/sitemap"
 import { analyzeContent } from "@/lib/parsers/content"
+import {
+  analyzeAIEngineSignals,
+  diagnoseAIEngines,
+} from "@/lib/parsers/ai-engines"
 import { gradeUrl } from "@/lib/grader"
 import {
   canAnalyze,
@@ -73,6 +77,10 @@ export async function POST(req: NextRequest) {
     const sitemap = analyzeSitemap(data.sitemapXml)
     const content = analyzeContent(data.html, data.resolvedUrl)
 
+    // AI engine signals (not scored, diagnostic only)
+    const aiSignals = analyzeAIEngineSignals(data.html, data.robotsTxt)
+    const aiDiagnostics = diagnoseAIEngines(aiSignals)
+
     // Grade
     const report = gradeUrl(
       data.resolvedUrl,
@@ -82,6 +90,9 @@ export async function POST(req: NextRequest) {
       robots,
       sitemap
     )
+
+    // Attach AI diagnostics to report
+    report.aiEngineDiagnostics = aiDiagnostics
 
     // Consume credit
     consumeCredit(sessionId, url)

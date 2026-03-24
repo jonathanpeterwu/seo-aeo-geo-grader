@@ -6,6 +6,7 @@ import { AnalysisReport } from "@/types"
 import { Suggestion } from "@/lib/suggestions"
 import ReportDashboard from "@/components/ReportDashboard"
 import { SuggestionsPanel } from "@/components/SuggestionsPanel"
+import { AIEngineDiagnostics } from "@/components/AIEngineDiagnostics"
 
 export default function Home() {
   const [url, setUrl] = useState("")
@@ -152,6 +153,9 @@ export default function Home() {
       {report && (
         <div className="space-y-6">
           <ReportDashboard report={report} />
+          {report.aiEngineDiagnostics && (
+            <AIEngineDiagnostics diagnostics={report.aiEngineDiagnostics} />
+          )}
           <SuggestionsPanel
             suggestions={suggestions}
             suggestionCount={suggestionCount}

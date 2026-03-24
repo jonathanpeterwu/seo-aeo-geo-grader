@@ -23,6 +23,14 @@ export interface CategoryGrade {
   grade: "A" | "B" | "C" | "D"
 }
 
+export interface AIEngineDiagnosticResult {
+  engine: "ChatGPT" | "Gemini" | "Perplexity" | "Bing"
+  readiness: "strong" | "moderate" | "weak"
+  score: number
+  signals: string[]
+  gaps: string[]
+}
+
 export interface AnalysisReport {
   url: string
   analyzedAt: string
@@ -31,6 +39,7 @@ export interface AnalysisReport {
   overallMaxScore: number
   overallPercentage: number
   overallGrade: "A" | "B" | "C" | "D"
+  aiEngineDiagnostics?: AIEngineDiagnosticResult[]
 }
 
 export interface FetchedData {

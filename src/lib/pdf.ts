@@ -127,6 +127,61 @@ export function generatePdf(report: AnalysisReport): Buffer {
     y += 5
   }
 
+  // AI Engine Diagnostics section
+  if (report.aiEngineDiagnostics && report.aiEngineDiagnostics.length > 0) {
+    checkPageBreak(50)
+    y += 5
+    doc.setDrawColor(229, 231, 235)
+    doc.line(margin, y, pageWidth - margin, y)
+    y += 8
+
+    doc.setFontSize(14)
+    setColor(doc, COLORS.heading)
+    doc.text("AI Engine Readiness (not scored)", margin, y)
+    y += 7
+
+    for (const diag of report.aiEngineDiagnostics) {
+      checkPageBreak(25)
+      const readinessColor =
+        diag.readiness === "strong"
+          ? COLORS.A
+          : diag.readiness === "moderate"
+            ? COLORS.C
+            : COLORS.D
+
+      doc.setFontSize(11)
+      setColor(doc, COLORS.text)
+      doc.text(`${diag.engine}`, margin, y)
+      setColor(doc, readinessColor)
+      doc.text(
+        `${diag.readiness} (${diag.score}%)`,
+        pageWidth - margin - 35,
+        y
+      )
+      y += 5
+
+      doc.setFontSize(8)
+      for (const signal of diag.signals) {
+        checkPageBreak(5)
+        setColor(doc, COLORS.pass)
+        doc.text("\u2713", margin + 2, y)
+        setColor(doc, COLORS.muted)
+        doc.text(signal, margin + 8, y)
+        y += 3.5
+      }
+      for (const gap of diag.gaps) {
+        checkPageBreak(5)
+        setColor(doc, COLORS.fail)
+        doc.text("\u2717", margin + 2, y)
+        setColor(doc, COLORS.muted)
+        const gapLines = doc.splitTextToSize(gap, pageWidth - margin * 2 - 8)
+        doc.text(gapLines, margin + 8, y)
+        y += gapLines.length * 3.5
+      }
+      y += 4
+    }
+  }
+
   // Rubric section
   checkPageBreak(80)
   y += 5

@@ -7,7 +7,7 @@ export const PLANS = {
     description: "Grade any home page instantly",
     features: [
       "Home page analysis",
-      "12-check scoring rubric",
+      "21pt weighted scoring rubric",
       "PDF report download",
       "Email report delivery",
     ],

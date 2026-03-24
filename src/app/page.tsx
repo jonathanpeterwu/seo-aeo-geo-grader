@@ -1,14 +1,20 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import Link from "next/link"
 import { AnalysisReport } from "@/types"
+import { Suggestion } from "@/lib/suggestions"
 import ReportDashboard from "@/components/ReportDashboard"
+import { SuggestionsPanel } from "@/components/SuggestionsPanel"
 
 export default function Home() {
   const [url, setUrl] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [report, setReport] = useState<AnalysisReport | null>(null)
+  const [suggestions, setSuggestions] = useState<Suggestion[] | null>(null)
+  const [suggestionCount, setSuggestionCount] = useState(0)
+  const [currentPlan, setCurrentPlan] = useState("free")
   const [sessionId, setSessionId] = useState("")
   const [creditsRemaining, setCreditsRemaining] = useState<number | null>(null)
 
@@ -33,6 +39,7 @@ export default function Home() {
     setLoading(true)
     setError(null)
     setReport(null)
+    setSuggestions(null)
 
     try {
       const res = await fetch("/api/analyze", {
@@ -49,7 +56,10 @@ export default function Home() {
       }
 
       setReport(data.report)
+      setSuggestions(data.suggestions)
+      setSuggestionCount(data.suggestionCount)
       setCreditsRemaining(data.creditsRemaining)
+      setCurrentPlan(data.currentPlan)
     } catch {
       setError("Network error. Please try again.")
     } finally {
@@ -59,13 +69,24 @@ export default function Home() {
 
   return (
     <div>
+      {/* Nav */}
+      <div className="mb-6 flex items-center justify-between">
+        <div />
+        <Link
+          href="/pricing"
+          className="text-sm font-medium text-blue-600 hover:underline"
+        >
+          Pricing &rarr;
+        </Link>
+      </div>
+
       {/* Hero */}
       <div className="mb-10 text-center">
         <h1 className="text-4xl font-bold tracking-tight text-gray-900">
           SEO / AEO / GEO Grader
         </h1>
         <p className="mt-3 text-lg text-gray-600">
-          12 automated checks across Search, Answer Engine, and Generative
+          21-point weighted scoring across Search, Answer Engine, and Generative
           Engine optimization. Free for any home page.
         </p>
       </div>
@@ -89,13 +110,22 @@ export default function Home() {
             {loading ? "Analyzing..." : "Grade"}
           </button>
         </div>
-        {creditsRemaining !== null && (
-          <p className="mt-2 text-sm text-gray-500">
-            {creditsRemaining > 0
-              ? `${creditsRemaining} free credit(s) remaining for sub-pages`
-              : "Home pages are always free. Sub-pages require credits."}
-          </p>
-        )}
+        <div className="mt-2 flex items-center justify-between text-sm text-gray-500">
+          <span>
+            {creditsRemaining !== null
+              ? creditsRemaining > 0
+                ? `${creditsRemaining} page credit(s) remaining`
+                : "Home pages are always free"
+              : "Home page analysis is free"}
+          </span>
+          {currentPlan !== "free" && (
+            <span className="rounded bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
+              {currentPlan === "site_pass"
+                ? "Site Pass"
+                : currentPlan.charAt(0).toUpperCase() + currentPlan.slice(1)}
+            </span>
+          )}
+        </div>
       </form>
 
       {/* Loading */}
@@ -103,9 +133,7 @@ export default function Home() {
         <div className="flex items-center justify-center py-16">
           <div className="text-center">
             <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-gray-200 border-t-blue-600" />
-            <p className="text-gray-600">
-              Fetching and analyzing page...
-            </p>
+            <p className="text-gray-600">Fetching and analyzing page...</p>
             <p className="mt-1 text-sm text-gray-400">
               Checking robots.txt, sitemap, meta tags, schema, content...
             </p>
@@ -121,7 +149,16 @@ export default function Home() {
       )}
 
       {/* Results */}
-      {report && <ReportDashboard report={report} />}
+      {report && (
+        <div className="space-y-6">
+          <ReportDashboard report={report} />
+          <SuggestionsPanel
+            suggestions={suggestions}
+            suggestionCount={suggestionCount}
+            isPaid={currentPlan !== "free"}
+          />
+        </div>
+      )}
 
       {/* Rubric */}
       {!report && !loading && (

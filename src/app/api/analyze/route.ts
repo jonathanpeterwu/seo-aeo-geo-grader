@@ -6,7 +6,15 @@ import { analyzeRobotsTxt } from "@/lib/parsers/robots"
 import { analyzeSitemap } from "@/lib/parsers/sitemap"
 import { analyzeContent } from "@/lib/parsers/content"
 import { gradeUrl } from "@/lib/grader"
-import { canAnalyze, consumeCredit, getRemaining, isHomePageUrl } from "@/lib/credits"
+import {
+  canAnalyze,
+  consumeCredit,
+  getRemaining,
+  isHomePageUrl,
+  canViewSuggestions,
+  getPlan,
+} from "@/lib/credits"
+import { generateSuggestions } from "@/lib/suggestions"
 
 export async function POST(req: NextRequest) {
   try {
@@ -33,10 +41,13 @@ export async function POST(req: NextRequest) {
 
     // Check credits
     if (!canAnalyze(sessionId, url)) {
+      const plan = getPlan(sessionId)
       return NextResponse.json(
         {
-          error: "No credits remaining. Home page analysis is free. Additional pages require credits.",
+          error:
+            "No credits remaining. Upgrade to Full Site Pass ($99) to scan unlimited pages.",
           creditsRemaining: getRemaining(sessionId),
+          currentPlan: plan.planId,
         },
         { status: 403 }
       )
@@ -47,7 +58,10 @@ export async function POST(req: NextRequest) {
 
     if (!data.html) {
       return NextResponse.json(
-        { error: "Could not fetch the page. Please check the URL and try again." },
+        {
+          error:
+            "Could not fetch the page. Please check the URL and try again.",
+        },
         { status: 422 }
       )
     }
@@ -60,15 +74,37 @@ export async function POST(req: NextRequest) {
     const content = analyzeContent(data.html, data.resolvedUrl)
 
     // Grade
-    const report = gradeUrl(data.resolvedUrl, meta, schema, content, robots, sitemap)
+    const report = gradeUrl(
+      data.resolvedUrl,
+      meta,
+      schema,
+      content,
+      robots,
+      sitemap
+    )
 
     // Consume credit
     consumeCredit(sessionId, url)
 
+    // Generate suggestions (gated by plan)
+    const allChecks = report.categories.flatMap((c) => c.checks)
+    const hasSuggestions = canViewSuggestions(sessionId)
+    const suggestions = hasSuggestions
+      ? generateSuggestions(allChecks)
+      : null
+
+    // For free users, show suggestion count as a teaser
+    const suggestionCount = generateSuggestions(allChecks).length
+
+    const plan = getPlan(sessionId)
+
     return NextResponse.json({
       report,
+      suggestions,
+      suggestionCount,
       creditsRemaining: getRemaining(sessionId),
       isHomePage: isHomePageUrl(url),
+      currentPlan: plan.planId,
     })
   } catch (err) {
     console.error("Analysis error:", err)

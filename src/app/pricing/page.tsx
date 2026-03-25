@@ -1,7 +1,8 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { Suspense, useState, useEffect } from "react"
 import Link from "next/link"
+import { useSearchParams } from "next/navigation"
 
 const plans = [
   {
@@ -13,6 +14,7 @@ const plans = [
     features: [
       "Home page analysis",
       "21pt weighted scoring rubric",
+      "AI engine readiness diagnostics",
       "PDF report download",
       "Email report delivery",
     ],
@@ -33,7 +35,7 @@ const plans = [
       "Page-by-page score breakdown",
       "Unlimited re-scans for 30 days",
     ],
-    cta: "Get Site Pass",
+    cta: "Get Site Pass — $99",
     ctaDisabled: false,
     highlight: true,
   },
@@ -52,7 +54,7 @@ const plans = [
       "Slack/email alerts on score drops",
       "Up to 1,000 pages/month",
     ],
-    cta: "Start Pro",
+    cta: "Start Pro — $49/mo",
     ctaDisabled: false,
     highlight: false,
   },
@@ -72,16 +74,26 @@ const plans = [
       "Up to 5,000 pages/month",
       "Priority support",
     ],
-    cta: "Start Agency",
+    cta: "Start Agency — $149/mo",
     ctaDisabled: false,
     highlight: false,
   },
 ]
 
 export default function PricingPage() {
+  return (
+    <Suspense>
+      <PricingContent />
+    </Suspense>
+  )
+}
+
+function PricingContent() {
   const [sessionId, setSessionId] = useState("")
   const [currentPlan, setCurrentPlan] = useState("free")
   const [loading, setLoading] = useState<string | null>(null)
+  const [message, setMessage] = useState<string | null>(null)
+  const searchParams = useSearchParams()
 
   useEffect(() => {
     let id = localStorage.getItem("grader-session-id")
@@ -90,11 +102,17 @@ export default function PricingPage() {
       localStorage.setItem("grader-session-id", id)
     }
     setSessionId(id)
-  }, [])
+
+    if (searchParams.get("cancelled") === "true") {
+      setMessage("Payment cancelled. You can try again anytime.")
+    }
+  }, [searchParams])
 
   async function handleUpgrade(planId: string) {
-    if (!sessionId) return
+    if (!sessionId || planId === "free") return
     setLoading(planId)
+    setMessage(null)
+
     try {
       const res = await fetch("/api/checkout", {
         method: "POST",
@@ -102,14 +120,25 @@ export default function PricingPage() {
         body: JSON.stringify({ planId, sessionId }),
       })
       const data = await res.json()
-      if (res.ok) {
+
+      if (!res.ok) {
+        setMessage(data.error || "Something went wrong")
+        return
+      }
+
+      // Stripe mode: redirect to Checkout
+      if (data.url) {
+        window.location.href = data.url
+        return
+      }
+
+      // Dev mode: instant upgrade
+      if (data.upgraded) {
         setCurrentPlan(planId)
-        alert(data.message)
-      } else {
-        alert(data.error)
+        setMessage(data.message)
       }
     } catch {
-      alert("Something went wrong")
+      setMessage("Network error. Please try again.")
     } finally {
       setLoading(null)
     }
@@ -130,6 +159,12 @@ export default function PricingPage() {
           fixes, and integrations.
         </p>
       </div>
+
+      {message && (
+        <div className="mb-6 rounded-lg border border-blue-200 bg-blue-50 p-4 text-center text-sm text-blue-700">
+          {message}
+        </div>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-4 md:grid-cols-2">
         {plans.map((plan) => {
@@ -189,7 +224,7 @@ export default function PricingPage() {
                 } disabled:opacity-50`}
               >
                 {loading === plan.id
-                  ? "Processing..."
+                  ? "Redirecting to checkout..."
                   : isCurrent
                     ? "Current Plan"
                     : plan.cta}
@@ -197,6 +232,10 @@ export default function PricingPage() {
             </div>
           )
         })}
+      </div>
+
+      <div className="mt-8 text-center text-xs text-gray-400">
+        Payments processed securely by Stripe. Cancel subscriptions anytime.
       </div>
 
       <div className="mt-10 rounded-lg border border-gray-200 bg-white p-6">

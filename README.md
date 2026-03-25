@@ -43,11 +43,37 @@ Open [http://localhost:3000](http://localhost:3000) and enter a URL to grade.
 
 ## Environment Variables
 
-Copy `.env.example` to `.env.local` for email delivery:
+Copy `.env.example` to `.env.local`:
 
 ```bash
 cp .env.example .env.local
 ```
+
+### Stripe (for payments)
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `STRIPE_SECRET_KEY` | For payments | Stripe secret key (`sk_test_...` or `sk_live_...`) |
+| `STRIPE_WEBHOOK_SECRET` | For payments | Webhook signing secret (`whsec_...`) |
+| `STRIPE_PRICE_SITE_PASS` | For payments | Price ID for $99 one-time site pass |
+| `STRIPE_PRICE_PRO` | For payments | Price ID for $49/mo Pro subscription |
+| `STRIPE_PRICE_AGENCY` | For payments | Price ID for $149/mo Agency subscription |
+| `NEXT_PUBLIC_APP_URL` | For payments | Your app URL for Stripe redirects |
+
+**Without Stripe keys:** The app runs in dev mode — plan upgrades happen instantly without payment (for development/testing).
+
+**To set up Stripe:**
+1. Create products + prices in [Stripe Dashboard](https://dashboard.stripe.com/products)
+2. Copy the price IDs to `.env.local`
+3. Set up the webhook endpoint: `https://your-app.vercel.app/api/webhook`
+4. Select events: `checkout.session.completed`, `customer.subscription.deleted`, `invoice.payment_failed`
+
+**Local webhook testing:**
+```bash
+stripe listen --forward-to localhost:3000/api/webhook
+```
+
+### Email (optional)
 
 | Variable | Required | Description |
 |----------|----------|-------------|
@@ -88,7 +114,8 @@ Add SMTP environment variables in Vercel dashboard → Settings → Environment 
 | POST | `/api/analyze` | Grade a URL (returns report + AI diagnostics) |
 | POST | `/api/report` | Generate PDF from report data |
 | POST | `/api/email` | Email PDF report |
-| POST | `/api/checkout` | Upgrade plan (Stripe stub) |
+| POST | `/api/checkout` | Create Stripe Checkout Session (or dev-mode instant upgrade) |
+| POST | `/api/webhook` | Stripe webhook (payment confirmation, subscription events) |
 
 ## Project Structure
 

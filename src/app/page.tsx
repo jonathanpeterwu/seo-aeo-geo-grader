@@ -1,7 +1,8 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { Suspense, useState, useEffect } from "react"
 import Link from "next/link"
+import { useSearchParams } from "next/navigation"
 import { AnalysisReport } from "@/types"
 import { Suggestion } from "@/lib/suggestions"
 import ReportDashboard from "@/components/ReportDashboard"
@@ -9,6 +10,14 @@ import { SuggestionsPanel } from "@/components/SuggestionsPanel"
 import { AIEngineDiagnostics } from "@/components/AIEngineDiagnostics"
 
 export default function Home() {
+  return (
+    <Suspense>
+      <HomeContent />
+    </Suspense>
+  )
+}
+
+function HomeContent() {
   const [url, setUrl] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -18,6 +27,8 @@ export default function Home() {
   const [currentPlan, setCurrentPlan] = useState("free")
   const [sessionId, setSessionId] = useState("")
   const [creditsRemaining, setCreditsRemaining] = useState<number | null>(null)
+  const [upgradeMessage, setUpgradeMessage] = useState<string | null>(null)
+  const searchParams = useSearchParams()
 
   useEffect(() => {
     let id = localStorage.getItem("grader-session-id")
@@ -26,7 +37,22 @@ export default function Home() {
       localStorage.setItem("grader-session-id", id)
     }
     setSessionId(id)
-  }, [])
+
+    const upgraded = searchParams.get("upgraded")
+    if (upgraded) {
+      const planNames: Record<string, string> = {
+        site_pass: "Full Site Pass",
+        pro: "Pro",
+        agency: "Agency",
+      }
+      setUpgradeMessage(
+        `Payment successful! You're now on the ${planNames[upgraded] || upgraded} plan. Enter a URL to start grading.`
+      )
+      setCurrentPlan(upgraded)
+      // Clean up the URL
+      window.history.replaceState({}, "", "/")
+    }
+  }, [searchParams])
 
   async function handleAnalyze(e: React.FormEvent) {
     e.preventDefault()
@@ -139,6 +165,13 @@ export default function Home() {
               Checking robots.txt, sitemap, meta tags, schema, content...
             </p>
           </div>
+        </div>
+      )}
+
+      {/* Upgrade success */}
+      {upgradeMessage && (
+        <div className="mb-6 rounded-lg border border-green-200 bg-green-50 p-4 text-green-700">
+          {upgradeMessage}
         </div>
       )}
 

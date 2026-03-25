@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { upgradePlan, getPlan } from "@/lib/credits"
 import { PlanId, PLANS } from "@/lib/plans"
+import { getStripe, isStripeConfigured, getPriceId, STRIPE_PRICES } from "@/lib/stripe"
 
 export async function POST(req: NextRequest) {
   try {
@@ -24,27 +25,49 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // TODO: Integrate Stripe for actual payment processing
-    //
-    // Stripe flow:
-    // 1. Create a Stripe Checkout Session with the plan price
-    //    - site_pass: mode "payment" (one-time $99)
-    //    - pro/agency: mode "subscription" ($49/$149 per month)
-    // 2. Redirect user to Stripe Checkout
-    // 3. On success webhook, call upgradePlan()
-    // 4. Return the checkout URL to the client
-    //
-    // For now, we simulate an instant upgrade for development.
-    // In production, replace this with Stripe integration.
+    // ── Stripe mode: create a real Checkout Session ──────────
+    if (isStripeConfigured()) {
+      const stripe = getStripe()!
+      const priceId = getPriceId(planId)
 
+      if (!priceId) {
+        return NextResponse.json(
+          { error: `Stripe price not configured for plan "${planId}". Set ${STRIPE_PRICES[planId]?.envKey} in .env.local.` },
+          { status: 500 }
+        )
+      }
+
+      const mode = STRIPE_PRICES[planId].mode
+      const origin = req.headers.get("origin") || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+
+      const session = await stripe.checkout.sessions.create({
+        mode,
+        line_items: [{ price: priceId, quantity: 1 }],
+        success_url: `${origin}/?upgraded=${planId}`,
+        cancel_url: `${origin}/pricing?cancelled=true`,
+        metadata: {
+          sessionId,
+          planId,
+        },
+        ...(mode === "subscription" && {
+          subscription_data: {
+            metadata: { sessionId, planId },
+          },
+        }),
+      })
+
+      return NextResponse.json({ url: session.url })
+    }
+
+    // ── Dev mode: instant upgrade (no Stripe keys set) ───────
     upgradePlan(sessionId, planId as PlanId)
-
     const plan = getPlan(sessionId)
 
     return NextResponse.json({
-      success: true,
+      url: null,
+      upgraded: true,
       plan: plan.planId,
-      message: `Upgraded to ${PLANS[planId as PlanId].name}. In production, this would redirect to Stripe Checkout.`,
+      message: `Upgraded to ${PLANS[planId as PlanId].name} (dev mode — no Stripe keys configured).`,
     })
   } catch (err) {
     console.error("Checkout error:", err)

@@ -1,3 +1,4 @@
+import * as cheerio from "cheerio"
 import { ContentAnalysis } from "@/types"
 import { CheerioDoc } from "./parse-html"
 
@@ -107,10 +108,12 @@ export function analyzeContent(
     }
   })
 
-  // Remove non-content elements for text analysis
-  $("script, style, nav, header, footer, noscript, svg, iframe").remove()
+  // Clone body for text analysis — do NOT mutate the shared $
+  // (other parsers like ai-engines.ts still need <script> tags)
+  const $clone = cheerio.load($.html())
+  $clone("script, style, nav, header, footer, noscript, svg, iframe").remove()
 
-  const bodyText = $("body").text()
+  const bodyText = $clone("body").text()
   const words = bodyText.split(/\s+/).filter((w) => w.length > 0)
   const wordCount = words.length
 

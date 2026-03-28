@@ -1,5 +1,41 @@
 import { PlanId, PLANS } from "./plans"
 
+// ── Coupon codes ──────────────────────────────────────────────
+interface Coupon {
+  grantsPlan: PlanId
+  maxUses: number | null // null = unlimited
+}
+
+const COUPONS: Record<string, Coupon> = {
+  zeus: { grantsPlan: "site_pass", maxUses: null },
+}
+
+const couponUses = new Map<string, number>()
+
+export function redeemCoupon(
+  sessionId: string,
+  code: string
+): { success: boolean; error?: string; plan?: PlanId } {
+  const normalized = code.trim().toLowerCase()
+  const coupon = COUPONS[normalized]
+
+  if (!coupon) {
+    return { success: false, error: "Invalid coupon code" }
+  }
+
+  if (coupon.maxUses !== null) {
+    const used = couponUses.get(normalized) ?? 0
+    if (used >= coupon.maxUses) {
+      return { success: false, error: "Coupon has been fully redeemed" }
+    }
+  }
+
+  upgradePlan(sessionId, coupon.grantsPlan)
+  couponUses.set(normalized, (couponUses.get(normalized) ?? 0) + 1)
+
+  return { success: true, plan: coupon.grantsPlan }
+}
+
 interface CreditEntry {
   planId: PlanId
   purchasedAt: string

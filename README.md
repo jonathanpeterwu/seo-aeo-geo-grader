@@ -113,6 +113,7 @@ Add SMTP environment variables in Vercel dashboard → Settings → Environment 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | POST | `/api/analyze` | Grade a URL (returns report + AI diagnostics) |
+| POST | `/api/analyze-site` | Batch-grade pages from sitemap (filter by path) |
 | POST | `/api/report` | Generate PDF from report data |
 | POST | `/api/email` | Email PDF report |
 | POST | `/api/checkout` | Create Stripe Checkout Session (or dev-mode instant upgrade) |

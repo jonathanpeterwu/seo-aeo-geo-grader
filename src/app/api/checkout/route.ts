@@ -1,19 +1,45 @@
 import { NextRequest, NextResponse } from "next/server"
-import { upgradePlan, getPlan } from "@/lib/credits"
+import { upgradePlan, getPlan, redeemCoupon } from "@/lib/credits"
 import { PlanId, PLANS } from "@/lib/plans"
 import { getStripe, isStripeConfigured, getPriceId, STRIPE_PRICES } from "@/lib/stripe"
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { planId, sessionId } = body as {
+    const { planId, sessionId, coupon } = body as {
       planId: string
       sessionId: string
+      coupon?: string
     }
 
-    if (!planId || !sessionId) {
+    if (!sessionId) {
       return NextResponse.json(
-        { error: "planId and sessionId are required" },
+        { error: "sessionId is required" },
+        { status: 400 }
+      )
+    }
+
+    // ── Coupon redemption ───────────────────────────────────────
+    if (coupon) {
+      const result = redeemCoupon(sessionId, coupon)
+      if (!result.success) {
+        return NextResponse.json(
+          { error: result.error },
+          { status: 400 }
+        )
+      }
+      const plan = getPlan(sessionId)
+      return NextResponse.json({
+        url: null,
+        upgraded: true,
+        plan: plan.planId,
+        message: `Coupon applied! Upgraded to ${PLANS[result.plan!].name}.`,
+      })
+    }
+
+    if (!planId) {
+      return NextResponse.json(
+        { error: "planId or coupon is required" },
         { status: 400 }
       )
     }

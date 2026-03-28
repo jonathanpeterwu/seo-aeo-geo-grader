@@ -4,10 +4,10 @@ import { useState } from "react"
 import { AnalysisReport } from "@/types"
 
 const GRADE_STYLES: Record<string, string> = {
-  A: "text-green-600 bg-green-50 border-green-200",
-  B: "text-blue-600 bg-blue-50 border-blue-200",
-  C: "text-amber-600 bg-amber-50 border-amber-200",
-  D: "text-red-600 bg-red-50 border-red-200",
+  A: "text-green-600 bg-green-50 border-green-200 dark:text-green-400 dark:bg-green-950 dark:border-green-800",
+  B: "text-blue-600 bg-blue-50 border-blue-200 dark:text-blue-400 dark:bg-blue-950 dark:border-blue-800",
+  C: "text-amber-600 bg-amber-50 border-amber-200 dark:text-amber-400 dark:bg-amber-950 dark:border-amber-800",
+  D: "text-red-600 bg-red-50 border-red-200 dark:text-red-400 dark:bg-red-950 dark:border-red-800",
 }
 
 export default function ReportDashboard({
@@ -86,7 +86,7 @@ export default function ReportDashboard({
             </div>
           </div>
         </div>
-        <p className="mt-3 text-sm text-gray-500 break-all">{report.url}</p>
+        <p className="mt-3 text-sm text-gray-500 break-all dark:text-gray-400">{report.url}</p>
       </div>
 
       {/* Category Cards */}
@@ -94,12 +94,12 @@ export default function ReportDashboard({
         {report.categories.map((cat) => (
           <div
             key={cat.category}
-            className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm"
+            className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-900"
           >
             <div className="mb-3 flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-900">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                 {cat.category}
-                <span className="ml-1 text-sm font-normal text-gray-500">
+                <span className="ml-1 text-sm font-normal text-gray-500 dark:text-gray-400">
                   {cat.score}/{cat.maxScore}pt
                 </span>
               </h3>
@@ -129,22 +129,22 @@ export default function ReportDashboard({
                     </span>
                     <div className="flex-1">
                       <div className="flex items-baseline justify-between text-sm">
-                        <span className="font-medium text-gray-800">
+                        <span className="font-medium text-gray-800 dark:text-gray-200">
                           {check.name}
                         </span>
                         <span
                           className={`ml-2 text-xs font-semibold ${
                             isFull
-                              ? "text-green-600"
+                              ? "text-green-600 dark:text-green-400"
                               : isPartial
-                                ? "text-amber-600"
+                                ? "text-amber-600 dark:text-amber-400"
                                 : "text-red-400"
                           }`}
                         >
                           {check.score}/{check.maxScore}
                         </span>
                       </div>
-                      <div className="text-xs text-gray-500">
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
                         {check.details}
                       </div>
                     </div>
@@ -157,15 +157,15 @@ export default function ReportDashboard({
       </div>
 
       {/* Actions */}
-      <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
-        <h3 className="mb-4 text-lg font-semibold text-gray-900">
+      <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-900">
+        <h3 className="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">
           Export Report
         </h3>
         <div className="flex flex-col gap-4 sm:flex-row">
           <button
             onClick={handleDownloadPdf}
             disabled={downloading}
-            className="rounded-lg bg-gray-800 px-5 py-2.5 text-sm font-semibold text-white hover:bg-gray-900 disabled:opacity-50"
+            className="rounded-lg bg-gray-800 px-5 py-2.5 text-sm font-semibold text-white hover:bg-gray-900 disabled:opacity-50 dark:bg-gray-700 dark:hover:bg-gray-600"
           >
             {downloading ? "Generating..." : "Download PDF"}
           </button>
@@ -176,7 +176,7 @@ export default function ReportDashboard({
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Email PDF report to..."
-              className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+              className="flex-1 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:focus:ring-blue-800"
             />
             <button
               type="submit"
@@ -188,7 +188,7 @@ export default function ReportDashboard({
           </form>
         </div>
         {emailStatus && (
-          <p className="mt-2 text-sm text-gray-600">{emailStatus}</p>
+          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">{emailStatus}</p>
         )}
       </div>
     </div>

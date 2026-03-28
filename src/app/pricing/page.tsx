@@ -13,7 +13,7 @@ const plans = [
     description: "Grade any home page instantly",
     features: [
       "Home page analysis",
-      "21pt weighted scoring rubric",
+      "100pt weighted scoring rubric",
       "AI engine readiness diagnostics",
       "PDF report download",
       "Email report delivery",

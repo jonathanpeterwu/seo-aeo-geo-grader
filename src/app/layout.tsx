@@ -4,7 +4,7 @@ import "./globals.css"
 export const metadata: Metadata = {
   title: "SEO/AEO/GEO Grader — Free Website Analysis",
   description:
-    "Grade your website across SEO, AEO, and GEO with a 21-point weighted rubric. Free home page analysis with PDF reports.",
+    "Grade your website across SEO, AEO, GEO, and AI Discovery with a 100-point weighted rubric. Free home page analysis with PDF reports.",
 }
 
 // Inline script to apply dark mode before React hydrates (no flash)

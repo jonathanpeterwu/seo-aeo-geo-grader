@@ -42,7 +42,7 @@ export async function fetchPageData(url: string): Promise<FetchedData> {
   const origin = getOrigin(url)
 
   // Fetch all discovery files in parallel
-  const [pageRes, robotsTxt, sitemapText, llmsTxt, llmsFullTxt, aiPluginText] =
+  const [pageRes, robotsTxt, sitemapText, llmsTxt, llmsFullTxt, aiPluginText, securityTxt] =
     await Promise.all([
       fetchWithTimeout(url),
       fetchText(`${origin}/robots.txt`),
@@ -50,6 +50,7 @@ export async function fetchPageData(url: string): Promise<FetchedData> {
       fetchText(`${origin}/llms.txt`),
       fetchText(`${origin}/llms-full.txt`),
       fetchText(`${origin}/.well-known/ai-plugin.json`),
+      fetchText(`${origin}/.well-known/security.txt`),
     ])
 
   const html = pageRes ? await pageRes.text() : ""
@@ -87,6 +88,7 @@ export async function fetchPageData(url: string): Promise<FetchedData> {
     llmsTxt,
     llmsFullTxt,
     aiPluginJson,
+    securityTxt,
     url,
     resolvedUrl,
   }

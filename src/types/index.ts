@@ -7,7 +7,7 @@ export interface AnalysisRequest {
 export interface CheckResult {
   id: string
   name: string
-  category: "SEO" | "AEO" | "CTA" | "GEO"
+  category: "SEO" | "AEO" | "CTA" | "GEO" | "AI_DISCOVERY"
   score: number
   maxScore: number
   passed: boolean
@@ -15,7 +15,7 @@ export interface CheckResult {
 }
 
 export interface CategoryGrade {
-  category: "SEO" | "AEO" | "CTA" | "GEO"
+  category: "SEO" | "AEO" | "CTA" | "GEO" | "AI_DISCOVERY"
   checks: CheckResult[]
   score: number
   maxScore: number
@@ -67,6 +67,7 @@ export interface FetchedData {
   llmsTxt: string | null
   llmsFullTxt: string | null
   aiPluginJson: Record<string, unknown> | null
+  securityTxt: string | null
   url: string
   resolvedUrl: string
 }

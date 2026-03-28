@@ -191,16 +191,17 @@ export function generatePdf(report: AnalysisReport): Buffer {
 
   doc.setFontSize(14)
   setColor(doc, COLORS.heading)
-  doc.text("Scoring Rubric \u2014 21pt Weighted", margin, y)
+  doc.text("Scoring Rubric \u2014 100pt Weighted", margin, y)
   y += 7
 
   const rubricLines = [
-    "SEO  (7pt): Title 2, Meta description 2, robots.txt 2, XML Sitemap 1",
-    "AEO  (5pt): JSON-LD 2, Open Graph 1, FAQ/Speakable 2 (partial 1)",
-    "CTA  (1pt): Call-to-action present 1",
-    "GEO  (8pt): Links 3 (tiered \u22655/\u22653/>0), Clean copy 2, Depth 1, Stats 1, H2s 1",
+    "SEO  (25pt): Title 5, Meta desc 5, Canonical 3, robots.txt 5, Sitemap 4, Freshness 3",
+    "AEO  (25pt): JSON-LD 5, OG 3, FAQ/Speakable 5, Schema stack 5, Freshness 4, Citations 3",
+    "CTA   (5pt): Call-to-action present 5",
+    "GEO  (25pt): Links 7, Clean copy 5, Depth 5, Stats 4, H2s 4",
+    "AI   (20pt): Bot access 6, llms.txt 5, llms-full.txt 4, security.txt 2, Blocks 3",
     "",
-    "Grade = (points / 21) \u00D7 100%",
+    "Grade = (points / 100) \u00D7 100%",
     "A \u2265 90%  |  B \u2265 75%  |  C \u2265 58%  |  D < 58%",
   ]
 

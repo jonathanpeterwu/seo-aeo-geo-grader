@@ -93,14 +93,17 @@ export async function POST(req: NextRequest) {
       data.aiPluginJson
     )
 
-    // Grade
+    // Grade (100pt rubric — includes AI signals + discovery data)
     const report = gradeUrl(
       data.resolvedUrl,
       meta,
       schema,
       content,
       robots,
-      sitemap
+      sitemap,
+      aiSignals,
+      aiDiscovery,
+      data.securityTxt
     )
 
     // Attach AI diagnostics + discovery

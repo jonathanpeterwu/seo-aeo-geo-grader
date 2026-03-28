@@ -138,8 +138,8 @@ function HomeContent() {
           SEO / AEO / GEO Grader
         </h1>
         <p className="mt-3 text-lg text-gray-600 dark:text-gray-400">
-          21-point weighted scoring across Search, Answer Engine, and Generative
-          Engine optimization. Free for any home page.
+          100-point weighted scoring across Search, Answer Engine, Generative
+          Engine, and AI Discovery optimization. Free for any home page.
         </p>
       </div>
 
@@ -229,15 +229,15 @@ function HomeContent() {
       {!report && !loading && (
         <div className="mt-12 rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-900">
           <h2 className="mb-4 text-xl font-semibold text-gray-900 dark:text-gray-50">
-            Scoring Rubric — 21pt Weighted
+            Scoring Rubric — 100pt Weighted
           </h2>
 
           <div className="mb-6 grid grid-cols-4 gap-3 text-center text-sm">
             {[
-              { grade: "A", range: "≥ 90%", pts: "≥19pt", color: "text-green-600 bg-green-50 border-green-200 dark:text-green-400 dark:bg-green-950 dark:border-green-800" },
-              { grade: "B", range: "≥ 75%", pts: "≥16pt", color: "text-blue-600 bg-blue-50 border-blue-200 dark:text-blue-400 dark:bg-blue-950 dark:border-blue-800" },
-              { grade: "C", range: "≥ 58%", pts: "≥13pt", color: "text-amber-600 bg-amber-50 border-amber-200 dark:text-amber-400 dark:bg-amber-950 dark:border-amber-800" },
-              { grade: "D", range: "< 58%", pts: "<13pt", color: "text-red-600 bg-red-50 border-red-200 dark:text-red-400 dark:bg-red-950 dark:border-red-800" },
+              { grade: "A", range: "≥ 90%", pts: "≥90pt", color: "text-green-600 bg-green-50 border-green-200 dark:text-green-400 dark:bg-green-950 dark:border-green-800" },
+              { grade: "B", range: "≥ 75%", pts: "≥75pt", color: "text-blue-600 bg-blue-50 border-blue-200 dark:text-blue-400 dark:bg-blue-950 dark:border-blue-800" },
+              { grade: "C", range: "≥ 58%", pts: "≥58pt", color: "text-amber-600 bg-amber-50 border-amber-200 dark:text-amber-400 dark:bg-amber-950 dark:border-amber-800" },
+              { grade: "D", range: "< 58%", pts: "<58pt", color: "text-red-600 bg-red-50 border-red-200 dark:text-red-400 dark:bg-red-950 dark:border-red-800" },
             ].map((g) => (
               <div
                 key={g.grade}
@@ -252,25 +252,32 @@ function HomeContent() {
 
           <div className="space-y-4 text-sm text-gray-700 dark:text-gray-300">
             <div>
-              <h3 className="font-semibold text-gray-900 dark:text-gray-100">SEO — 7pt</h3>
-              <p>Title (2), Meta description (2), robots.txt (2), XML Sitemap (1)</p>
+              <h3 className="font-semibold text-gray-900 dark:text-gray-100">SEO — 25pt</h3>
+              <p>Title (5), Meta description (5), Canonical URL (3), robots.txt (5), XML Sitemap (4), Sitemap freshness (3 tiered)</p>
             </div>
             <div>
-              <h3 className="font-semibold text-gray-900 dark:text-gray-100">AEO — 5pt</h3>
+              <h3 className="font-semibold text-gray-900 dark:text-gray-100">AEO — 25pt</h3>
               <p>
-                JSON-LD structured data (2), Open Graph tags (1),
-                FAQ/Speakable schema (2, partial 1 if &lt;3 FAQs)
+                JSON-LD (5), Open Graph (3), FAQ/Speakable (5 tiered),
+                Schema stack depth (5), Content freshness (4 tiered), Outbound citations (3 tiered)
               </p>
             </div>
             <div>
-              <h3 className="font-semibold text-gray-900 dark:text-gray-100">CTA — 1pt</h3>
+              <h3 className="font-semibold text-gray-900 dark:text-gray-100">CTA — 5pt</h3>
               <p>Clear call-to-action present on page</p>
             </div>
             <div>
-              <h3 className="font-semibold text-gray-900 dark:text-gray-100">GEO — 8pt</h3>
+              <h3 className="font-semibold text-gray-900 dark:text-gray-100">GEO — 25pt</h3>
               <p>
-                Links (3, tiered: ≥5/≥3/&gt;0), Clean copy (2),
-                Content depth ≥1,200w (1), Statistics (1), H2 headings ≥3 (1)
+                Links (7 tiered), Clean copy (5),
+                Content depth (5 tiered), Statistics (4 tiered), H2 headings (4 tiered)
+              </p>
+            </div>
+            <div>
+              <h3 className="font-semibold text-gray-900 dark:text-gray-100">AI Discovery — 20pt</h3>
+              <p>
+                AI bot access (6 tiered), llms.txt (5 tiered), llms-full.txt (4 tiered),
+                security.txt (2), Extractable blocks (3 tiered)
               </p>
             </div>
           </div>

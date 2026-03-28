@@ -3,6 +3,14 @@
 import { useState } from "react"
 import { AnalysisReport } from "@/types"
 
+const CATEGORY_LABELS: Record<string, string> = {
+  SEO: "SEO",
+  AEO: "AEO",
+  CTA: "CTA",
+  GEO: "GEO",
+  AI_DISCOVERY: "AI Discovery",
+}
+
 const GRADE_STYLES: Record<string, string> = {
   A: "text-green-600 bg-green-50 border-green-200 dark:text-green-400 dark:bg-green-950 dark:border-green-800",
   B: "text-blue-600 bg-blue-50 border-blue-200 dark:text-blue-400 dark:bg-blue-950 dark:border-blue-800",
@@ -98,7 +106,7 @@ export default function ReportDashboard({
           >
             <div className="mb-3 flex items-center justify-between">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                {cat.category}
+                {CATEGORY_LABELS[cat.category] ?? cat.category}
                 <span className="ml-1 text-sm font-normal text-gray-500 dark:text-gray-400">
                   {cat.score}/{cat.maxScore}pt
                 </span>

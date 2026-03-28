@@ -2,7 +2,7 @@ import { CheerioDoc } from "./parse-html"
 
 /**
  * AI engine-specific signal detection.
- * Not scored in the 21pt rubric, but flagged in reports.
+ * AI engine signal detection — some signals feed into the 100pt rubric, all flagged in reports.
  */
 
 export interface AIEngineSignals {

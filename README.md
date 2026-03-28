@@ -1,12 +1,12 @@
 # SEO / AEO / GEO Grader
 
-Free website grader that scores any URL across **SEO**, **AEO** (Answer Engine Optimization), and **GEO** (Generative Engine Optimization) using a 21-point weighted rubric. Includes AI engine readiness diagnostics for ChatGPT, Gemini, Perplexity, and Bing.
+Free website grader that scores any URL across **SEO**, **AEO** (Answer Engine Optimization), **GEO** (Generative Engine Optimization), and **AI Discovery** using a 100-point weighted rubric. Includes AI engine readiness diagnostics for ChatGPT, Gemini, Perplexity, and Bing.
 
 **[Live Demo →](#)** (deploy your own below)
 
 ## Features
 
-- **21pt weighted scoring** across 4 categories (SEO 7pt, AEO 5pt, CTA 1pt, GEO 8pt)
+- **100pt weighted scoring** across 5 categories (SEO 25pt, AEO 25pt, CTA 5pt, GEO 25pt, AI Discovery 20pt)
 - **AI engine readiness** diagnostics for ChatGPT, Gemini, Perplexity, Bing (flagged, not scored)
 - **PDF report** generation with full breakdown
 - **Email delivery** of PDF reports
@@ -18,10 +18,11 @@ Free website grader that scores any URL across **SEO**, **AEO** (Answer Engine O
 
 | Category | Points | Checks |
 |----------|--------|--------|
-| **SEO** | 7 | Title (2), Meta description (2), robots.txt (2), XML Sitemap (1) |
-| **AEO** | 5 | JSON-LD (2), Open Graph (1), FAQ/Speakable schema (2, partial 1) |
-| **CTA** | 1 | Call-to-action present (1) |
-| **GEO** | 8 | Links (3 tiered), Clean copy (2), Depth (1), Stats (1), H2s (1) |
+| **SEO** | 25 | Title (5), Meta description (5), Canonical URL (3), robots.txt (5), XML Sitemap (4), Sitemap freshness (3 tiered) |
+| **AEO** | 25 | JSON-LD (5), Open Graph (3), FAQ/Speakable (5 tiered), Schema stack depth (5), Content freshness (4 tiered), Outbound citations (3 tiered) |
+| **CTA** | 5 | Call-to-action present (5) |
+| **GEO** | 25 | Links (7 tiered), Clean copy (5), Depth (5 tiered), Stats (4 tiered), H2s (4 tiered) |
+| **AI Discovery** | 20 | AI bot access (6 tiered), llms.txt (5 tiered), llms-full.txt (4 tiered), security.txt (2), Extractable blocks (3 tiered) |
 
 **Grades:** A ≥ 90% | B ≥ 75% | C ≥ 58% | D < 58%
 
@@ -133,7 +134,7 @@ src/
 │   ├── ReportDashboard.tsx       # Score + category cards
 │   └── SuggestionsPanel.tsx      # Fix suggestions (gated)
 ├── lib/
-│   ├── grader.ts                 # 21pt weighted scoring engine
+│   ├── grader.ts                 # 100pt weighted scoring engine
 │   ├── suggestions.ts            # Actionable fix generator
 │   ├── credits.ts                # Plan-aware credit system
 │   ├── pdf.ts                    # PDF report generation

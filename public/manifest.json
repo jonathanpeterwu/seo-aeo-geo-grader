@@ -1,0 +1,14 @@
+{
+  "name": "SEO/AEO/GEO Grader",
+  "short_name": "SEO Grader",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ],
+  "theme_color": "#3b82f6",
+  "background_color": "#ffffff",
+  "display": "standalone"
+}

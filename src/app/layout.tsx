@@ -5,6 +5,13 @@ export const metadata: Metadata = {
   title: "SEO/AEO/GEO Grader — Free Website Analysis",
   description:
     "Grade your website across SEO, AEO, GEO, and AI Discovery with a 100-point weighted rubric. Free home page analysis with PDF reports.",
+  icons: {
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+    ],
+    apple: "/icon.svg",
+  },
+  manifest: "/manifest.json",
 }
 
 // Inline script to apply dark mode before React hydrates (no flash)

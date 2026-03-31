@@ -21,7 +21,7 @@ import {
   getPlan,
 } from "@/lib/credits"
 import { generateSuggestions } from "@/lib/suggestions"
-import { indexReport } from "@/lib/site-index"
+import { indexReport, getDb } from "@/lib/site-index"
 
 export async function POST(req: NextRequest) {
   try {
@@ -112,7 +112,8 @@ export async function POST(req: NextRequest) {
     report.aiDiscovery = aiDiscovery
 
     // Persist to site index (long-term domain storage)
-    indexReport(report)
+    const db = getDb()
+    await indexReport(report, db)
 
     // Consume credit
     consumeCredit(sessionId, url)

@@ -1,0 +1,14 @@
+# Cloudflare Workers + D1 configuration
+# Run `wrangler d1 create grader-index` to create the database
+# Then update database_id below with the returned ID
+
+name = "seo-aeo-geo-grader"
+compatibility_date = "2024-12-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "grader-index"
+database_id = "TO_BE_CREATED"  # Run: wrangler d1 create grader-index
+
+# Apply migrations: wrangler d1 migrations apply grader-index
+# Local dev:        wrangler d1 migrations apply grader-index --local

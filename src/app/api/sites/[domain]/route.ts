@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getSiteRecord } from "@/lib/site-index"
+import { getSiteRecord, getDb } from "@/lib/site-index"
 
 export async function GET(
   _req: NextRequest,
   { params }: { params: { domain: string } }
 ) {
-  const record = getSiteRecord(params.domain)
+  const db = getDb()
+  const record = await getSiteRecord(params.domain, db)
 
   if (!record) {
     return NextResponse.json(

@@ -31,3 +31,6 @@ yarn-error.log*
 
 # vercel
 .vercel
+
+# site index data (persistent storage)
+.data/

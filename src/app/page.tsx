@@ -124,12 +124,20 @@ function HomeContent() {
       {/* Nav */}
       <div className="mb-6 flex items-center justify-between">
         <ThemeToggle />
-        <Link
-          href="/pricing"
-          className="text-sm font-medium text-blue-600 hover:underline dark:text-blue-400"
-        >
-          Pricing &rarr;
-        </Link>
+        <div className="flex items-center gap-4">
+          <Link
+            href="/sites"
+            className="text-sm font-medium text-blue-600 hover:underline dark:text-blue-400"
+          >
+            Site Directory
+          </Link>
+          <Link
+            href="/pricing"
+            className="text-sm font-medium text-blue-600 hover:underline dark:text-blue-400"
+          >
+            Pricing &rarr;
+          </Link>
+        </div>
       </div>
 
       {/* Hero */}

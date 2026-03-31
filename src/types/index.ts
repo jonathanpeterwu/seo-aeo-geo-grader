@@ -110,3 +110,41 @@ export interface SitemapAnalysis {
   exists: boolean
   urlCount: number
 }
+
+/* ─── Site Index (persistent domain storage) ─── */
+
+export interface SiteSnapshot {
+  url: string
+  analyzedAt: string
+  overallScore: number
+  overallMaxScore: number
+  overallPercentage: number
+  overallGrade: "A" | "B" | "C" | "D"
+  categoryScores: {
+    category: string
+    score: number
+    maxScore: number
+    percentage: number
+    grade: "A" | "B" | "C" | "D"
+  }[]
+}
+
+export interface SiteRecord {
+  domain: string
+  firstSeen: string
+  lastSeen: string
+  analyzeCount: number
+  latestSnapshot: SiteSnapshot
+  history: SiteSnapshot[]
+}
+
+export interface SiteIndexSummary {
+  domain: string
+  firstSeen: string
+  lastSeen: string
+  analyzeCount: number
+  latestGrade: "A" | "B" | "C" | "D"
+  latestScore: number
+  latestPercentage: number
+  scoreChange: number | null
+}

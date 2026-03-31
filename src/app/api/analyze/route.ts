@@ -21,6 +21,7 @@ import {
   getPlan,
 } from "@/lib/credits"
 import { generateSuggestions } from "@/lib/suggestions"
+import { indexReport } from "@/lib/site-index"
 
 export async function POST(req: NextRequest) {
   try {
@@ -109,6 +110,9 @@ export async function POST(req: NextRequest) {
     // Attach AI diagnostics + discovery
     report.aiEngineDiagnostics = aiDiagnostics
     report.aiDiscovery = aiDiscovery
+
+    // Persist to site index (long-term domain storage)
+    indexReport(report)
 
     // Consume credit
     consumeCredit(sessionId, url)

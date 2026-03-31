@@ -14,11 +14,11 @@ import { AIDiscoverySignals } from "@/lib/parsers/ai-discovery"
 /**
  * 100pt weighted rubric — publicly gradeable signals only
  *
- * SEO          (25pt): title 5, description 5, canonical 3, robots.txt 5, sitemap 4, sitemap freshness 3
+ * SEO          (28pt): title 5, description 5, canonical 3, viewport 2, robots.txt 4, sitemap 4, sitemap freshness 2, E-E-A-T trust pages 3
  * AEO          (25pt): JSON-LD 5, Open Graph 3, FAQ/Speakable 5, schema stack 5, freshness 4, citations 3
  * CTA           (5pt): CTA present 5
  * GEO          (25pt): links 7, clean copy 5, depth 5, stats 4, h2s 4
- * AI Discovery (20pt): AI bot access 6, llms.txt 5, llms-full.txt 4, security.txt 2, extractable blocks 3
+ * AI Discovery (17pt): AI bot access 5, llms.txt 4, llms-full.txt 3, security.txt 2, extractable blocks 3
  *
  * Grades: A ≥90% | B ≥75% | C ≥58% | D <58%
  */
@@ -53,29 +53,37 @@ export function gradeUrl(
   aiDiscovery?: AIDiscoverySignals,
   securityTxt?: string | null
 ): AnalysisReport {
-  // ── SEO (25pt) ─────────────────────────────────────────────
+  // ── SEO (28pt) ─────────────────────────────────────────────
   const titleOk = !!meta.title && meta.title.length >= 5 && meta.title.length <= 80
   const descOk = !!meta.description && meta.description.length >= 30 && meta.description.length <= 200
   const canonicalOk = !!meta.canonical
+  const viewportOk = !!meta.viewport
 
-  // Sitemap freshness: 3pt if >50% fresh, 2pt if >25%, 1pt if any lastmod
+  // Sitemap freshness: 2pt if >50% fresh, 1pt if >25%, 0pt otherwise
   let sitemapFreshnessScore = 0
   let sitemapFreshnessDetails = "No sitemap or lastmod data"
   if (aiDiscovery && aiDiscovery.sitemapUrlCount > 0) {
-    const freshRatio = aiDiscovery.sitemapUrlCount > 0
-      ? aiDiscovery.sitemapFreshPages / aiDiscovery.sitemapUrlCount
-      : 0
+    const freshRatio = aiDiscovery.sitemapFreshPages / aiDiscovery.sitemapUrlCount
     if (freshRatio > 0.5) {
-      sitemapFreshnessScore = 3
+      sitemapFreshnessScore = 2
       sitemapFreshnessDetails = `${Math.round(freshRatio * 100)}% pages fresh (${aiDiscovery.sitemapFreshPages}/${aiDiscovery.sitemapUrlCount})`
     } else if (freshRatio > 0.25) {
-      sitemapFreshnessScore = 2
+      sitemapFreshnessScore = 1
       sitemapFreshnessDetails = `${Math.round(freshRatio * 100)}% pages fresh — need >50% for full marks`
     } else if (aiDiscovery.newestLastmod) {
-      sitemapFreshnessScore = 1
       sitemapFreshnessDetails = `Only ${Math.round(freshRatio * 100)}% pages fresh — need >50% for full marks`
     }
   }
+
+  // E-E-A-T trust pages: 3pt if ≥3 trust signals, 2pt if 2, 1pt if 1
+  const trustCount = content.trustPageCount
+  const trustScore = trustCount >= 3 ? 3 : trustCount === 2 ? 2 : trustCount >= 1 ? 1 : 0
+  const trustSignals = [
+    content.hasAboutLink && "About page",
+    content.hasPrivacyLink && "Privacy policy",
+    content.hasTermsLink && "Terms of service",
+    content.hasAddressElement && "Physical address",
+  ].filter(Boolean)
 
   const seoChecks: CheckResult[] = [
     {
@@ -112,11 +120,22 @@ export function gradeUrl(
         : "No canonical link tag found",
     },
     {
+      id: "viewport",
+      name: "Viewport Meta (Mobile)",
+      category: "SEO",
+      maxScore: 2,
+      score: viewportOk ? 2 : 0,
+      passed: viewportOk,
+      details: viewportOk
+        ? `"${meta.viewport}"`
+        : "No viewport meta tag — page may not render correctly on mobile",
+    },
+    {
       id: "robots",
       name: "robots.txt",
       category: "SEO",
-      maxScore: 5,
-      score: robots.exists ? 5 : 0,
+      maxScore: 4,
+      score: robots.exists ? 4 : 0,
       passed: robots.exists,
       details: robots.exists
         ? `Found. ${robots.sitemapUrls.length} sitemap reference(s).`
@@ -137,10 +156,21 @@ export function gradeUrl(
       id: "sitemap-freshness",
       name: "Sitemap Freshness",
       category: "SEO",
-      maxScore: 3,
+      maxScore: 2,
       score: sitemapFreshnessScore,
-      passed: sitemapFreshnessScore === 3,
+      passed: sitemapFreshnessScore === 2,
       details: sitemapFreshnessDetails,
+    },
+    {
+      id: "trust-pages",
+      name: "E-E-A-T Trust Pages",
+      category: "SEO",
+      maxScore: 3,
+      score: trustScore,
+      passed: trustScore === 3,
+      details: trustSignals.length > 0
+        ? `${trustSignals.join(", ")}${trustScore < 3 ? " — need ≥3 signals for full marks" : ""}`
+        : "No about, privacy, or terms links found",
     },
   ]
 
@@ -355,8 +385,8 @@ export function gradeUrl(
     },
   ]
 
-  // ── AI Discovery (20pt) ────────────────────────────────────
-  // AI bot access: count of 4 major bots allowed (GPTBot, ClaudeBot, PerplexityBot, GoogleBot)
+  // ── AI Discovery (17pt) ────────────────────────────────────
+  // AI bot access: 5pt tiered by major bots allowed
   let aiBotScore = 0
   let aiBotDetails = "No robots.txt data"
   if (aiSignals) {
@@ -366,8 +396,7 @@ export function gradeUrl(
       aiSignals.allowsPerplexityBot,
       aiSignals.allowsGoogleBot,
     ].filter((b) => b === true).length
-    // 6pt if all 4, 4pt if 3, 3pt if 2, 1pt if 1, 0pt if none
-    aiBotScore = botsAllowed >= 4 ? 6 : botsAllowed === 3 ? 4 : botsAllowed === 2 ? 3 : botsAllowed === 1 ? 1 : 0
+    aiBotScore = botsAllowed >= 4 ? 5 : botsAllowed === 3 ? 4 : botsAllowed === 2 ? 3 : botsAllowed === 1 ? 1 : 0
     const botNames = [
       aiSignals.allowsGPTBot && "GPTBot",
       aiSignals.allowsClaudeBot && "ClaudeBot",
@@ -377,15 +406,15 @@ export function gradeUrl(
     aiBotDetails = `${botsAllowed}/4 AI bots allowed: ${botNames.join(", ") || "none"}`
   }
 
-  // llms.txt: 5pt if exists + ≥3 sections, 3pt if exists, 0pt if missing
+  // llms.txt: 4pt if exists + ≥3 sections, 2pt if exists, 0pt if missing
   const hasLlmsTxt = aiDiscovery?.hasLlmsTxt ?? false
   const llmsSections = aiDiscovery?.llmsTxtSections?.length ?? 0
-  const llmsScore = hasLlmsTxt ? (llmsSections >= 3 ? 5 : 3) : 0
+  const llmsScore = hasLlmsTxt ? (llmsSections >= 3 ? 4 : 2) : 0
 
-  // llms-full.txt: 4pt if >5000 chars, 2pt if exists, 0pt if missing
+  // llms-full.txt: 3pt if >5000 chars, 1pt if exists, 0pt if missing
   const hasLlmsFullTxt = aiDiscovery?.hasLlmsFullTxt ?? false
   const llmsFullLen = aiDiscovery?.llmsFullTxtLength ?? 0
-  const llmsFullScore = hasLlmsFullTxt ? (llmsFullLen > 5000 ? 4 : 2) : 0
+  const llmsFullScore = hasLlmsFullTxt ? (llmsFullLen > 5000 ? 3 : 1) : 0
 
   // security.txt: 2pt if exists
   const hasSecurityTxt = !!securityTxt
@@ -400,31 +429,31 @@ export function gradeUrl(
       id: "ai-bot-access",
       name: "AI Bot Access",
       category: "AI_DISCOVERY",
-      maxScore: 6,
+      maxScore: 5,
       score: aiBotScore,
-      passed: aiBotScore === 6,
+      passed: aiBotScore === 5,
       details: aiBotDetails,
     },
     {
       id: "llms-txt",
       name: "llms.txt",
       category: "AI_DISCOVERY",
-      maxScore: 5,
+      maxScore: 4,
       score: llmsScore,
-      passed: llmsScore === 5,
+      passed: llmsScore === 4,
       details: hasLlmsTxt
-        ? `Found (${aiDiscovery?.llmsTxtLength ?? 0} chars, ${llmsSections} section(s))${llmsScore < 5 ? " — need ≥3 sections for full marks" : ""}`
+        ? `Found (${aiDiscovery?.llmsTxtLength ?? 0} chars, ${llmsSections} section(s))${llmsScore < 4 ? " — need ≥3 sections for full marks" : ""}`
         : "No /llms.txt found — add to help LLMs understand your site",
     },
     {
       id: "llms-full-txt",
       name: "llms-full.txt",
       category: "AI_DISCOVERY",
-      maxScore: 4,
+      maxScore: 3,
       score: llmsFullScore,
-      passed: llmsFullScore === 4,
+      passed: llmsFullScore === 3,
       details: hasLlmsFullTxt
-        ? `Found (${llmsFullLen.toLocaleString()} chars)${llmsFullScore < 4 ? " — need >5,000 chars for full marks" : ""}`
+        ? `Found (${llmsFullLen.toLocaleString()} chars)${llmsFullScore < 3 ? " — need >5,000 chars for full marks" : ""}`
         : "No /llms-full.txt found",
     },
     {

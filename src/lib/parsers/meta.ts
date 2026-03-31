@@ -9,10 +9,12 @@ export function extractMetaTags($: CheerioDoc): MetaTags {
 
   const canonical = $('link[rel="canonical"]').attr("href")?.trim() || null
 
+  const viewport = $('meta[name="viewport"]').attr("content")?.trim() || null
+
   const ogTitle = $('meta[property="og:title"]').attr("content")?.trim() || null
   const ogDescription =
     $('meta[property="og:description"]').attr("content")?.trim() || null
   const ogImage = $('meta[property="og:image"]').attr("content")?.trim() || null
 
-  return { title, description, canonical, ogTitle, ogDescription, ogImage }
+  return { title, description, canonical, viewport, ogTitle, ogDescription, ogImage }
 }

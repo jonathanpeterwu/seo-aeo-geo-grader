@@ -125,6 +125,57 @@ export function analyzeContent(
   const statsMatches = bodyText.match(/\d+%|\$[\d,]+k?\b|\d+x\b/g) || []
   const statsCount = statsMatches.length
 
+  // ── E-E-A-T signals ─────────────────────────────────────────
+  // Author meta tag
+  const hasAuthorMeta = !!$('meta[name="author"]').attr("content")
+
+  // Author in JSON-LD schema
+  let hasAuthorSchema = false
+  let authorName: string | null = null
+  $('script[type="application/ld+json"]').each((_, el) => {
+    try {
+      const text = $(el).text()
+      if (!text) return
+      const data = JSON.parse(text)
+      const items = Array.isArray(data) ? data : [data]
+      for (const item of items) {
+        if (item.author) {
+          hasAuthorSchema = true
+          if (typeof item.author === "string") authorName = item.author
+          else if (item.author.name) authorName = item.author.name
+        }
+        if (Array.isArray(item["@graph"])) {
+          for (const node of item["@graph"]) {
+            if (node.author) {
+              hasAuthorSchema = true
+              if (typeof node.author === "string") authorName = node.author
+              else if (node.author.name) authorName = node.author.name
+            }
+          }
+        }
+      }
+    } catch { /* skip */ }
+  })
+
+  // Trust page links: about, privacy, terms
+  let hasAboutLink = false
+  let hasPrivacyLink = false
+  let hasTermsLink = false
+
+  $("a[href]").each((_, el) => {
+    const href = ($(el).attr("href") || "").toLowerCase()
+    const text = ($(el).text() || "").toLowerCase()
+    if (href.includes("/about") || href.includes("/team") || text.includes("about us")) hasAboutLink = true
+    if (href.includes("/privacy") || text.includes("privacy policy")) hasPrivacyLink = true
+    if (href.includes("/terms") || href.includes("/tos") || text.includes("terms of service") || text.includes("terms of use")) hasTermsLink = true
+  })
+
+  // Physical address element
+  const hasAddressElement = $("address").length > 0
+
+  // Count trust pages found
+  const trustPageCount = [hasAboutLink, hasPrivacyLink, hasTermsLink, hasAddressElement].filter(Boolean).length
+
   return {
     wordCount,
     linkCount: internalLinks + externalLinks,
@@ -135,5 +186,13 @@ export function analyzeContent(
     bannedWordCount: foundBanned.length,
     h2Count,
     statsCount,
+    hasAuthorMeta,
+    hasAuthorSchema,
+    authorName,
+    hasAboutLink,
+    hasPrivacyLink,
+    hasTermsLink,
+    hasAddressElement,
+    trustPageCount,
   }
 }

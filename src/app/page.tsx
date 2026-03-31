@@ -252,8 +252,8 @@ function HomeContent() {
 
           <div className="space-y-4 text-sm text-gray-700 dark:text-gray-300">
             <div>
-              <h3 className="font-semibold text-gray-900 dark:text-gray-100">SEO — 25pt</h3>
-              <p>Title (5), Meta description (5), Canonical URL (3), robots.txt (5), XML Sitemap (4), Sitemap freshness (3 tiered)</p>
+              <h3 className="font-semibold text-gray-900 dark:text-gray-100">SEO — 28pt</h3>
+              <p>Title (5), Meta description (5), Canonical URL (3), Viewport (2), robots.txt (4), XML Sitemap (4), Sitemap freshness (2 tiered), E-E-A-T trust pages (3 tiered)</p>
             </div>
             <div>
               <h3 className="font-semibold text-gray-900 dark:text-gray-100">AEO — 25pt</h3>
@@ -274,9 +274,9 @@ function HomeContent() {
               </p>
             </div>
             <div>
-              <h3 className="font-semibold text-gray-900 dark:text-gray-100">AI Discovery — 20pt</h3>
+              <h3 className="font-semibold text-gray-900 dark:text-gray-100">AI Discovery — 17pt</h3>
               <p>
-                AI bot access (6 tiered), llms.txt (5 tiered), llms-full.txt (4 tiered),
+                AI bot access (5 tiered), llms.txt (4 tiered), llms-full.txt (3 tiered),
                 security.txt (2), Extractable blocks (3 tiered)
               </p>
             </div>

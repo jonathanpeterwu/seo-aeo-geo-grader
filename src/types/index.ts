@@ -76,6 +76,7 @@ export interface MetaTags {
   title: string | null
   description: string | null
   canonical: string | null
+  viewport: string | null
   ogTitle: string | null
   ogDescription: string | null
   ogImage: string | null
@@ -99,6 +100,15 @@ export interface ContentAnalysis {
   bannedWordCount: number
   h2Count: number
   statsCount: number
+  // E-E-A-T signals
+  hasAuthorMeta: boolean
+  hasAuthorSchema: boolean
+  authorName: string | null
+  hasAboutLink: boolean
+  hasPrivacyLink: boolean
+  hasTermsLink: boolean
+  hasAddressElement: boolean
+  trustPageCount: number
 }
 
 export interface RobotsAnalysis {

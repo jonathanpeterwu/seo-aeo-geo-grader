@@ -195,11 +195,11 @@ export function generatePdf(report: AnalysisReport): Buffer {
   y += 7
 
   const rubricLines = [
-    "SEO  (25pt): Title 5, Meta desc 5, Canonical 3, robots.txt 5, Sitemap 4, Freshness 3",
+    "SEO  (28pt): Title 5, Meta desc 5, Canonical 3, Viewport 2, robots.txt 4, Sitemap 4, Freshness 2, E-E-A-T 3",
     "AEO  (25pt): JSON-LD 5, OG 3, FAQ/Speakable 5, Schema stack 5, Freshness 4, Citations 3",
     "CTA   (5pt): Call-to-action present 5",
     "GEO  (25pt): Links 7, Clean copy 5, Depth 5, Stats 4, H2s 4",
-    "AI   (20pt): Bot access 6, llms.txt 5, llms-full.txt 4, security.txt 2, Blocks 3",
+    "AI   (17pt): Bot access 5, llms.txt 4, llms-full.txt 3, security.txt 2, Blocks 3",
     "",
     "Grade = (points / 100) \u00D7 100%",
     "A \u2265 90%  |  B \u2265 75%  |  C \u2265 58%  |  D < 58%",

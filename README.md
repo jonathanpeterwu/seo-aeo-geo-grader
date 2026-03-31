@@ -18,11 +18,11 @@ Free website grader that scores any URL across **SEO**, **AEO** (Answer Engine O
 
 | Category | Points | Checks |
 |----------|--------|--------|
-| **SEO** | 25 | Title (5), Meta description (5), Canonical URL (3), robots.txt (5), XML Sitemap (4), Sitemap freshness (3 tiered) |
+| **SEO** | 28 | Title (5), Meta description (5), Canonical URL (3), Viewport meta (2), robots.txt (4), XML Sitemap (4), Sitemap freshness (2 tiered), E-E-A-T trust pages (3 tiered) |
 | **AEO** | 25 | JSON-LD (5), Open Graph (3), FAQ/Speakable (5 tiered), Schema stack depth (5), Content freshness (4 tiered), Outbound citations (3 tiered) |
 | **CTA** | 5 | Call-to-action present (5) |
 | **GEO** | 25 | Links (7 tiered), Clean copy (5), Depth (5 tiered), Stats (4 tiered), H2s (4 tiered) |
-| **AI Discovery** | 20 | AI bot access (6 tiered), llms.txt (5 tiered), llms-full.txt (4 tiered), security.txt (2), Extractable blocks (3 tiered) |
+| **AI Discovery** | 17 | AI bot access (5 tiered), llms.txt (4 tiered), llms-full.txt (3 tiered), security.txt (2), Extractable blocks (3 tiered) |
 
 **Grades:** A ≥ 90% | B ≥ 75% | C ≥ 58% | D < 58%
 

@@ -48,6 +48,18 @@ export function generateSuggestions(checks: CheckResult[]): Suggestion[] {
         })
         break
 
+      case "viewport":
+        suggestions.push({
+          checkId: "viewport",
+          priority: "high",
+          title: "Add viewport meta tag for mobile",
+          description:
+            'Add <meta name="viewport" content="width=device-width, initial-scale=1"> to the <head>. Without this, your page won\'t render correctly on mobile devices. Google uses mobile-first indexing — this is a hard requirement.',
+          effort: "quick",
+          impact: "+2pt SEO — required for mobile-first indexing",
+        })
+        break
+
       case "canonical":
         suggestions.push({
           checkId: "canonical",
@@ -93,6 +105,18 @@ export function generateSuggestions(checks: CheckResult[]): Suggestion[] {
             "Include accurate <lastmod> dates in your sitemap.xml. Keep >50% of pages updated within the last 90 days for full marks. Stale sitemaps signal abandoned content to AI engines.",
           effort: "moderate",
           impact: `+${check.maxScore - check.score}pt SEO — freshness signals boost AI engine citation priority`,
+        })
+        break
+
+      case "trust-pages":
+        suggestions.push({
+          checkId: "trust-pages",
+          priority: "medium",
+          title: "Add E-E-A-T trust pages",
+          description:
+            `${check.details}. Link to at least 3 of these from every page:\n\n• /about or /team — establishes expertise and authority\n• /privacy — required for GDPR and builds trust\n• /terms — legal credibility signal\n• <address> element — physical presence signal\n\nThese are direct E-E-A-T signals Google evaluates for site quality.`,
+          effort: "moderate",
+          impact: `+${check.maxScore - check.score}pt SEO — E-E-A-T trust signals affect ranking quality evaluation`,
         })
         break
 

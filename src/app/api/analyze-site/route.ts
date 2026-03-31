@@ -41,6 +41,171 @@ interface SiteSummary {
   categoryAverages: Record<string, number>
 }
 
+interface SiteHealthIssue {
+  type: "thin_content" | "duplicate_title" | "orphaned_page" | "deep_url" | "missing_viewport" | "no_canonical"
+  severity: "high" | "medium" | "low"
+  url: string
+  details: string
+}
+
+interface SiteHealth {
+  issues: SiteHealthIssue[]
+  thinPages: number
+  duplicateTitles: number
+  deepUrls: number
+  missingViewport: number
+  missingCanonical: number
+  urlPatterns: { pattern: string; count: number }[]
+  maxDepth: number
+  averageDepth: number
+}
+
+function analyzeSiteHealth(results: PageResult[], allDiscoveredUrls: string[]): SiteHealth {
+  const issues: SiteHealthIssue[] = []
+  const successful = results.filter((r) => r.report)
+  let thinPages = 0
+  let duplicateTitles = 0
+  let deepUrls = 0
+  let missingViewport = 0
+  let missingCanonical = 0
+
+  // ── Thin content detection (<300 words) ─────────────────────
+  for (const r of successful) {
+    const depthCheck = r.report!.categories
+      .flatMap((c) => c.checks)
+      .find((ch) => ch.id === "depth")
+    if (depthCheck) {
+      const wordMatch = depthCheck.details.match(/([\d,]+)\s*words/)
+      if (wordMatch) {
+        const wordCount = parseInt(wordMatch[1].replace(/,/g, ""), 10)
+        if (wordCount < 300) {
+          thinPages++
+          issues.push({
+            type: "thin_content",
+            severity: "high",
+            url: r.url,
+            details: `Only ${wordCount} words — thin content risk, may be ignored by search engines`,
+          })
+        }
+      }
+    }
+  }
+
+  // ── Duplicate title detection ───────────────────────────────
+  const titleMap = new Map<string, string[]>()
+  for (const r of successful) {
+    const titleCheck = r.report!.categories
+      .flatMap((c) => c.checks)
+      .find((ch) => ch.id === "title")
+    if (titleCheck && titleCheck.passed) {
+      // Extract title from details: "Title text" (N chars)
+      const titleMatch = titleCheck.details.match(/^"(.+?)"\s*\(/)
+      if (titleMatch) {
+        const title = titleMatch[1].toLowerCase()
+        if (!titleMap.has(title)) titleMap.set(title, [])
+        titleMap.get(title)!.push(r.url)
+      }
+    }
+  }
+  for (const [title, urls] of titleMap) {
+    if (urls.length > 1) {
+      duplicateTitles += urls.length
+      for (const url of urls) {
+        issues.push({
+          type: "duplicate_title",
+          severity: "medium",
+          url,
+          details: `Duplicate title "${title}" shared with ${urls.length - 1} other page(s)`,
+        })
+      }
+    }
+  }
+
+  // ── URL depth analysis ──────────────────────────────────────
+  const depths: number[] = []
+  const pathPrefixes = new Map<string, number>()
+
+  for (const r of successful) {
+    try {
+      const parsed = new URL(r.url)
+      const segments = parsed.pathname.split("/").filter(Boolean)
+      const depth = segments.length
+      depths.push(depth)
+
+      if (depth > 4) {
+        deepUrls++
+        issues.push({
+          type: "deep_url",
+          severity: "low",
+          url: r.url,
+          details: `URL depth ${depth} — pages >4 levels deep get less crawl equity`,
+        })
+      }
+
+      // Track URL patterns (first 2 segments)
+      const prefix = "/" + segments.slice(0, Math.min(2, segments.length)).join("/")
+      pathPrefixes.set(prefix, (pathPrefixes.get(prefix) ?? 0) + 1)
+    } catch { /* skip */ }
+  }
+
+  // ── Missing viewport ────────────────────────────────────────
+  for (const r of successful) {
+    const vpCheck = r.report!.categories
+      .flatMap((c) => c.checks)
+      .find((ch) => ch.id === "viewport")
+    if (vpCheck && !vpCheck.passed) {
+      missingViewport++
+      issues.push({
+        type: "missing_viewport",
+        severity: "high",
+        url: r.url,
+        details: "No viewport meta tag — page not mobile-friendly",
+      })
+    }
+  }
+
+  // ── Missing canonical ───────────────────────────────────────
+  for (const r of successful) {
+    const canCheck = r.report!.categories
+      .flatMap((c) => c.checks)
+      .find((ch) => ch.id === "canonical")
+    if (canCheck && !canCheck.passed) {
+      missingCanonical++
+      issues.push({
+        type: "no_canonical",
+        severity: "medium",
+        url: r.url,
+        details: "No canonical URL — risk of duplicate content in search index",
+      })
+    }
+  }
+
+  // Sort issues: high first
+  const severityOrder = { high: 0, medium: 1, low: 2 }
+  issues.sort((a, b) => severityOrder[a.severity] - severityOrder[b.severity])
+
+  // URL patterns sorted by count
+  const urlPatterns = [...pathPrefixes.entries()]
+    .map(([pattern, count]) => ({ pattern, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 15)
+
+  const maxDepth = depths.length > 0 ? Math.max(...depths) : 0
+  const averageDepth = depths.length > 0 ? Math.round((depths.reduce((a, b) => a + b, 0) / depths.length) * 10) / 10 : 0
+
+  return {
+    issues,
+    thinPages,
+    duplicateTitles,
+    deepUrls,
+    missingViewport,
+    missingCanonical,
+    urlPatterns,
+    maxDepth,
+    averageDepth,
+  }
+}
+
 async function fetchText(fetchUrl: string): Promise<string | null> {
   try {
     const controller = new AbortController()
@@ -354,9 +519,11 @@ export async function POST(req: NextRequest) {
     }
 
     const summary = summarize(results)
+    const siteHealth = analyzeSiteHealth(results, toGrade.map((d) => d.url))
 
     return NextResponse.json({
       summary,
+      siteHealth,
       pages: results,
       discovery: {
         totalUnique: discovery.totalUnique,

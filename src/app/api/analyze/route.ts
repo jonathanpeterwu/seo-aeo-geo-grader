@@ -11,6 +11,7 @@ import {
   diagnoseAIEngines,
 } from "@/lib/parsers/ai-engines"
 import { analyzeAIDiscovery } from "@/lib/parsers/ai-discovery"
+import { detectTechStack } from "@/lib/parsers/tech-stack"
 import { gradeUrl } from "@/lib/grader"
 import {
   canAnalyze,
@@ -107,9 +108,13 @@ export async function POST(req: NextRequest) {
       data.securityTxt
     )
 
-    // Attach AI diagnostics + discovery
+    // Tech stack detection (BuiltWith-style)
+    const techStack = detectTechStack($)
+
+    // Attach AI diagnostics + discovery + tech stack
     report.aiEngineDiagnostics = aiDiagnostics
     report.aiDiscovery = aiDiscovery
+    report.techStack = techStack
 
     // Persist to site index (long-term domain storage)
     indexReport(report)

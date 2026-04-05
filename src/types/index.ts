@@ -58,6 +58,17 @@ export interface AnalysisReport {
     oldestLastmod: string | null
     newestLastmod: string | null
   }
+  techStack?: {
+    technologies: {
+      name: string
+      category: string
+      confidence: "high" | "medium" | "low"
+      evidence: string
+      website?: string
+    }[]
+    categoryBreakdown: { category: string; count: number; items: string[] }[]
+    totalDetected: number
+  }
 }
 
 export interface FetchedData {

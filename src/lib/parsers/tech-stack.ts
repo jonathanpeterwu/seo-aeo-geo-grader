@@ -20,7 +20,12 @@ export interface DetectedTech {
   confidence: "high" | "medium" | "low"
   evidence: string // what matched
   website?: string
-  icon?: string
+  seoImpact?: SEOImpact
+}
+
+export interface SEOImpact {
+  effect: "positive" | "neutral" | "negative" | "warning"
+  summary: string
 }
 
 export type TechCategory =
@@ -39,12 +44,15 @@ export type TechCategory =
   | "video"
   | "social"
   | "security"
+  | "server"
   | "misc"
 
 export interface TechStackResult {
   technologies: DetectedTech[]
   categoryBreakdown: { category: TechCategory; count: number; items: string[] }[]
   totalDetected: number
+  seoWarnings: string[]
+  seoPositives: string[]
 }
 
 // ── Fingerprint Rules ────────────────────────────────────────
@@ -62,7 +70,21 @@ interface MatchContext {
   scriptSrcs: string[]   // all <script src="..."> values
   linkHrefs: string[]    // all <link href="..."> values
   metaTags: Map<string, string> // name/property → content
+  headers: Record<string, string> // HTTP response headers (lowercased keys)
   $: CheerioDoc
+}
+
+// Helper: check response header
+function headerMatch(headers: Record<string, string>, key: string, pattern: RegExp): string | null {
+  const val = headers[key]
+  if (val && pattern.test(val.toLowerCase())) return `header ${key}: ${val.slice(0, 80)}`
+  return null
+}
+
+function headerContains(headers: Record<string, string>, key: string, needle: string): string | null {
+  const val = headers[key]
+  if (val && val.toLowerCase().includes(needle.toLowerCase())) return `header ${key}: ${val.slice(0, 80)}`
+  return null
 }
 
 // Helper: check if any script src matches a pattern
@@ -98,10 +120,7 @@ const FINGERPRINTS: FingerprintRule[] = [
       (ctx) => htmlContains(ctx.html, "__next_data__"),
       (ctx) => scriptMatch(ctx.scriptSrcs, /\/_next\//),
       (ctx) => htmlContains(ctx.html, 'id="__next"'),
-      (ctx) => {
-        const xPow = ctx.metaTags.get("x-powered-by")
-        return xPow?.toLowerCase().includes("next.js") ? `meta: x-powered-by: ${xPow}` : null
-      },
+      (ctx) => headerContains(ctx.headers, "x-powered-by", "next.js"),
     ],
   },
   {
@@ -429,8 +448,9 @@ const FINGERPRINTS: FingerprintRule[] = [
     website: "https://vercel.com",
     matchers: [
       (ctx) => scriptMatch(ctx.scriptSrcs, /vercel/),
-      (ctx) => htmlContains(ctx.html, "vercel"),
       (ctx) => htmlContains(ctx.html, "/_vercel/"),
+      (ctx) => headerMatch(ctx.headers, "x-vercel-id", /./),
+      (ctx) => headerContains(ctx.headers, "server", "vercel"),
     ],
   },
   {
@@ -449,8 +469,8 @@ const FINGERPRINTS: FingerprintRule[] = [
     matchers: [
       (ctx) => scriptMatch(ctx.scriptSrcs, /cloudflare/),
       (ctx) => scriptMatch(ctx.scriptSrcs, /cdnjs\.cloudflare\.com/),
-      (ctx) => htmlContains(ctx.html, "cf-ray"),
-      (ctx) => htmlContains(ctx.html, "__cf_bm"),
+      (ctx) => headerMatch(ctx.headers, "cf-ray", /./),
+      (ctx) => headerContains(ctx.headers, "server", "cloudflare"),
     ],
   },
   {
@@ -974,6 +994,73 @@ const FINGERPRINTS: FingerprintRule[] = [
       (ctx) => htmlContains(ctx.html, "optimizely"),
     ],
   },
+
+  // ─── Server / Infrastructure (header-based) ─────
+  {
+    name: "Nginx",
+    category: "server",
+    website: "https://nginx.org",
+    matchers: [
+      (ctx) => headerContains(ctx.headers, "server", "nginx"),
+    ],
+  },
+  {
+    name: "Apache",
+    category: "server",
+    website: "https://httpd.apache.org",
+    matchers: [
+      (ctx) => headerContains(ctx.headers, "server", "apache"),
+    ],
+  },
+  {
+    name: "Express",
+    category: "server",
+    website: "https://expressjs.com",
+    matchers: [
+      (ctx) => headerContains(ctx.headers, "x-powered-by", "express"),
+    ],
+  },
+  {
+    name: "Node.js",
+    category: "server",
+    website: "https://nodejs.org",
+    matchers: [
+      (ctx) => headerContains(ctx.headers, "x-powered-by", "node"),
+    ],
+  },
+  {
+    name: "PHP",
+    category: "server",
+    website: "https://www.php.net",
+    matchers: [
+      (ctx) => headerContains(ctx.headers, "x-powered-by", "php"),
+    ],
+  },
+  {
+    name: "ASP.NET",
+    category: "server",
+    website: "https://dotnet.microsoft.com/apps/aspnet",
+    matchers: [
+      (ctx) => headerContains(ctx.headers, "x-powered-by", "asp.net"),
+      (ctx) => headerContains(ctx.headers, "x-aspnet-version", "."),
+    ],
+  },
+  {
+    name: "Envoy",
+    category: "server",
+    website: "https://www.envoyproxy.io",
+    matchers: [
+      (ctx) => headerContains(ctx.headers, "server", "envoy"),
+    ],
+  },
+  {
+    name: "Caddy",
+    category: "server",
+    website: "https://caddyserver.com",
+    matchers: [
+      (ctx) => headerContains(ctx.headers, "server", "caddy"),
+    ],
+  },
 ]
 
 // ── Category Labels ──────────────────────────────────────────
@@ -994,12 +1081,64 @@ export const CATEGORY_LABELS: Record<TechCategory, string> = {
   video: "Video",
   social: "Social",
   security: "Security",
+  server: "Server & Infrastructure",
   misc: "Other",
 }
 
 // ── Main Detection Function ──────────────────────────────────
 
-export function detectTechStack($: CheerioDoc): TechStackResult {
+// ── SEO Impact Rules ─────────────────────────────────────────
+// Maps tech name → SEO impact annotation
+
+const SEO_IMPACTS: Record<string, SEOImpact> = {
+  // SSR frameworks — positive for crawlability
+  "Next.js":     { effect: "positive", summary: "SSR/SSG framework — excellent crawlability and Core Web Vitals" },
+  "Nuxt.js":     { effect: "positive", summary: "SSR/SSG framework — excellent crawlability for Vue apps" },
+  "Gatsby":      { effect: "positive", summary: "Static site generator — fast TTFB and full crawlability" },
+  "Remix":       { effect: "positive", summary: "SSR framework — good crawlability with streaming support" },
+  "Astro":       { effect: "positive", summary: "Islands architecture — minimal JS shipped, fast load times" },
+  "SvelteKit":   { effect: "positive", summary: "SSR/SSG framework — minimal runtime overhead" },
+
+  // Client-only frameworks — warning
+  "React":       { effect: "neutral", summary: "Client-side library — ensure SSR/SSG wrapper (Next.js, Remix) for crawlability" },
+  "Vue.js":      { effect: "neutral", summary: "Client-side library — ensure SSR wrapper (Nuxt) for crawlability" },
+  "Angular":     { effect: "warning", summary: "SPA framework — verify server-side rendering is enabled for crawlers" },
+  "Svelte":      { effect: "neutral", summary: "Compiled framework — small bundle size benefits Core Web Vitals" },
+
+  // CDN — positive
+  "Cloudflare":  { effect: "positive", summary: "Global CDN — reduces TTFB, improves Core Web Vitals worldwide" },
+  "Vercel":      { effect: "positive", summary: "Edge network — optimized for Next.js with automatic CDN" },
+  "Netlify":     { effect: "positive", summary: "Edge CDN — fast static asset delivery" },
+  "AWS CloudFront": { effect: "positive", summary: "Global CDN — reduces latency for static assets" },
+  "Fastly":      { effect: "positive", summary: "Edge CDN — low-latency delivery" },
+
+  // Analytics — warning if too many
+  "Google Analytics": { effect: "neutral", summary: "Standard analytics — minimal performance impact" },
+  "Google Tag Manager": { effect: "neutral", summary: "Tag container — monitor for tag bloat affecting CWV" },
+  "Hotjar":      { effect: "warning", summary: "Session recording — can impact page load and Largest Contentful Paint" },
+  "Facebook Pixel": { effect: "warning", summary: "Tracking pixel — adds render-blocking requests" },
+
+  // CMS — varies
+  "WordPress":   { effect: "neutral", summary: "Most SEO plugins available — ensure caching and image optimization" },
+  "Webflow":     { effect: "positive", summary: "Built-in SEO controls, auto-sitemap, clean semantic HTML" },
+  "Shopify":     { effect: "neutral", summary: "E-commerce SEO basics included — limited URL structure control" },
+  "Wix":         { effect: "warning", summary: "Limited SEO control — heavy JavaScript, slow initial render" },
+  "Squarespace": { effect: "neutral", summary: "Basic SEO built-in — limited structured data options" },
+
+  // Monitoring — positive
+  "Sentry":      { effect: "positive", summary: "Error tracking — helps catch SEO-impacting JavaScript errors" },
+
+  // Heavy JS libraries — warning
+  "jQuery":      { effect: "warning", summary: "Legacy library — 87KB adds to bundle size, impacts CWV" },
+  "Three.js":    { effect: "warning", summary: "3D library — heavy payload, ensure lazy loading" },
+  "GSAP":        { effect: "neutral", summary: "Animation library — lightweight, minimal CWV impact" },
+  "Lottie":      { effect: "neutral", summary: "Animation library — ensure lazy loading for below-fold content" },
+}
+
+export function detectTechStack(
+  $: CheerioDoc,
+  responseHeaders: Record<string, string> = {}
+): TechStackResult {
   // Build match context once
   const html = ($.html() || "").toLowerCase()
 
@@ -1022,7 +1161,13 @@ export function detectTechStack($: CheerioDoc): TechStackResult {
     if (name && content) metaTags.set(name, content)
   })
 
-  const ctx: MatchContext = { html, scriptSrcs, linkHrefs, metaTags, $ }
+  // Normalize header keys to lowercase
+  const headers: Record<string, string> = {}
+  for (const [k, v] of Object.entries(responseHeaders)) {
+    headers[k.toLowerCase()] = v
+  }
+
+  const ctx: MatchContext = { html, scriptSrcs, linkHrefs, metaTags, headers, $ }
 
   // Run all fingerprints
   const technologies: DetectedTech[] = []
@@ -1050,50 +1195,76 @@ export function detectTechStack($: CheerioDoc): TechStackResult {
         confidence: matchCount >= 3 ? "high" : matchCount >= 2 ? "medium" : "low",
         evidence: firstEvidence,
         website: fp.website,
+        seoImpact: SEO_IMPACTS[fp.name],
       })
     }
   }
 
-  // Implied technologies: Next.js implies React
-  if (seen.has("Next.js") && !seen.has("React")) {
-    technologies.push({
-      name: "React",
-      category: "framework",
-      confidence: "high",
-      evidence: "Implied by Next.js",
-      website: "https://react.dev",
-    })
-    seen.add("React")
+  // Implied technologies
+  const IMPLIED: [string, string, TechCategory, string][] = [
+    ["Next.js", "React", "framework", "https://react.dev"],
+    ["Nuxt.js", "Vue.js", "framework", "https://vuejs.org"],
+    ["Gatsby", "React", "framework", "https://react.dev"],
+    ["SvelteKit", "Svelte", "framework", "https://svelte.dev"],
+  ]
+  for (const [parent, child, cat, website] of IMPLIED) {
+    if (seen.has(parent) && !seen.has(child)) {
+      seen.add(child)
+      technologies.push({
+        name: child,
+        category: cat,
+        confidence: "high",
+        evidence: `Implied by ${parent}`,
+        website,
+        seoImpact: SEO_IMPACTS[child],
+      })
+    }
   }
-  if (seen.has("Nuxt.js") && !seen.has("Vue.js")) {
-    technologies.push({
-      name: "Vue.js",
-      category: "framework",
-      confidence: "high",
-      evidence: "Implied by Nuxt.js",
-      website: "https://vuejs.org",
-    })
-    seen.add("Vue.js")
+
+  // ── SEO Warnings & Positives ───────────────────────────────
+  const seoWarnings: string[] = []
+  const seoPositives: string[] = []
+
+  // Warn: React/Vue without SSR framework
+  const hasReact = seen.has("React")
+  const hasSSR = seen.has("Next.js") || seen.has("Gatsby") || seen.has("Remix")
+  if (hasReact && !hasSSR) {
+    seoWarnings.push("React detected without SSR framework (Next.js/Gatsby/Remix) — content may not be crawlable by search engines")
   }
-  if (seen.has("Gatsby") && !seen.has("React")) {
-    technologies.push({
-      name: "React",
-      category: "framework",
-      confidence: "high",
-      evidence: "Implied by Gatsby",
-      website: "https://react.dev",
-    })
-    seen.add("React")
+  const hasVue = seen.has("Vue.js")
+  if (hasVue && !seen.has("Nuxt.js")) {
+    seoWarnings.push("Vue.js detected without Nuxt.js — ensure server-side rendering is configured for crawlability")
   }
-  if (seen.has("SvelteKit") && !seen.has("Svelte")) {
-    technologies.push({
-      name: "Svelte",
-      category: "framework",
-      confidence: "high",
-      evidence: "Implied by SvelteKit",
-      website: "https://svelte.dev",
-    })
-    seen.add("Svelte")
+
+  // Warn: No CDN
+  const hasCDN = seen.has("Cloudflare") || seen.has("Vercel") || seen.has("Netlify") || seen.has("AWS CloudFront") || seen.has("Fastly") || seen.has("Akamai")
+  if (!hasCDN) {
+    seoWarnings.push("No CDN detected — consider adding one to reduce TTFB and improve Core Web Vitals")
+  } else {
+    seoPositives.push("CDN detected — good for global performance and Core Web Vitals")
+  }
+
+  // Warn: No analytics
+  const hasAnalytics = technologies.some((t) => t.category === "analytics" || t.category === "tag-manager")
+  if (!hasAnalytics) {
+    seoWarnings.push("No analytics detected — unable to measure SEO performance without tracking")
+  }
+
+  // Warn: Script bloat (5+ analytics/tracking scripts)
+  const trackingCount = technologies.filter((t) => t.category === "analytics" || t.category === "tag-manager" || t.category === "social").length
+  if (trackingCount >= 5) {
+    seoWarnings.push(`${trackingCount} tracking scripts detected — excessive third-party scripts degrade Core Web Vitals`)
+  }
+
+  // Warn: No error monitoring
+  const hasMonitoring = technologies.some((t) => t.category === "monitoring")
+  if (!hasMonitoring && technologies.length >= 5) {
+    seoWarnings.push("No error monitoring detected — JavaScript errors can silently break SEO-critical rendering")
+  }
+
+  // Positive: SSR framework
+  if (hasSSR || seen.has("Nuxt.js") || seen.has("SvelteKit") || seen.has("Astro")) {
+    seoPositives.push("SSR/SSG framework detected — content is crawlable by search engines and AI bots")
   }
 
   // Build category breakdown
@@ -1112,5 +1283,7 @@ export function detectTechStack($: CheerioDoc): TechStackResult {
     technologies,
     categoryBreakdown,
     totalDetected: technologies.length,
+    seoWarnings,
+    seoPositives,
   }
 }

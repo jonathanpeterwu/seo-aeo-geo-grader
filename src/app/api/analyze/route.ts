@@ -108,8 +108,8 @@ export async function POST(req: NextRequest) {
       data.securityTxt
     )
 
-    // Tech stack detection (BuiltWith-style)
-    const techStack = detectTechStack($)
+    // Tech stack detection (BuiltWith-style) — HTML + response headers
+    const techStack = detectTechStack($, data.responseHeaders)
 
     // Attach AI diagnostics + discovery + tech stack
     report.aiEngineDiagnostics = aiDiagnostics

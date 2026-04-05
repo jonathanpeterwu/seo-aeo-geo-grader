@@ -183,6 +183,59 @@ export default function DomainDetailPage() {
         </div>
       </div>
 
+      {/* Tech Stack History */}
+      {latest.techStack && latest.techStack.length > 0 && (
+        <div className="mt-8">
+          <h2 className="mb-3 text-lg font-semibold text-gray-900 dark:text-gray-50">
+            Detected Tech Stack
+          </h2>
+          <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900">
+            <div className="flex flex-wrap gap-2">
+              {latest.techStack.map((tech) => (
+                <span
+                  key={tech.name}
+                  className="inline-flex items-center gap-1 rounded-lg border border-gray-200 bg-gray-50 px-3 py-1.5 text-sm dark:border-gray-700 dark:bg-gray-800"
+                >
+                  <span className="font-medium text-gray-800 dark:text-gray-200">
+                    {tech.name}
+                  </span>
+                  <span className="text-[10px] text-gray-400">
+                    {tech.category}
+                  </span>
+                </span>
+              ))}
+            </div>
+
+            {/* Show tech changes if there are 2+ scans */}
+            {history.length >= 2 && (() => {
+              const prevTech = history[1]?.techStack || []
+              const currentNames = new Set(latest.techStack!.map((t) => t.name))
+              const prevNames = new Set(prevTech.map((t) => t.name))
+              const added = latest.techStack!.filter((t) => !prevNames.has(t.name))
+              const removed = prevTech.filter((t) => !currentNames.has(t.name))
+              if (added.length === 0 && removed.length === 0) return null
+              return (
+                <div className="mt-3 border-t border-gray-100 pt-3 text-sm dark:border-gray-800">
+                  <p className="mb-1 font-medium text-gray-700 dark:text-gray-300">
+                    Changes since last scan:
+                  </p>
+                  {added.map((t) => (
+                    <span key={t.name} className="mr-2 inline-flex items-center gap-1 text-green-600 dark:text-green-400">
+                      + {t.name}
+                    </span>
+                  ))}
+                  {removed.map((t) => (
+                    <span key={t.name} className="mr-2 inline-flex items-center gap-1 text-red-500 dark:text-red-400">
+                      - {t.name}
+                    </span>
+                  ))}
+                </div>
+              )
+            })()}
+          </div>
+        </div>
+      )}
+
       {/* Re-analyze CTA */}
       <div className="mt-8 text-center">
         <Link

@@ -56,6 +56,21 @@ export async function fetchPageData(url: string): Promise<FetchedData> {
   const html = pageRes ? await pageRes.text() : ""
   const resolvedUrl = pageRes?.url || url
 
+  // Capture response headers for server-side tech detection
+  const responseHeaders: Record<string, string> = {}
+  if (pageRes) {
+    const headerKeys = [
+      "server", "x-powered-by", "x-generator", "x-cdn",
+      "x-cache", "x-vercel-id", "x-netlify", "cf-ray",
+      "x-amz-cf-id", "x-served-by", "via",
+      "content-security-policy", "strict-transport-security",
+    ]
+    for (const key of headerKeys) {
+      const val = pageRes.headers.get(key)
+      if (val) responseHeaders[key] = val
+    }
+  }
+
   // Validate sitemap XML
   let sitemapXml: string | null = null
   if (sitemapText && (sitemapText.includes("<urlset") || sitemapText.includes("<sitemapindex"))) {
@@ -91,5 +106,6 @@ export async function fetchPageData(url: string): Promise<FetchedData> {
     securityTxt,
     url,
     resolvedUrl,
+    responseHeaders,
   }
 }

@@ -58,6 +58,23 @@ export interface AnalysisReport {
     oldestLastmod: string | null
     newestLastmod: string | null
   }
+  techStack?: {
+    technologies: {
+      name: string
+      category: string
+      confidence: "high" | "medium" | "low"
+      evidence: string
+      website?: string
+      seoImpact?: {
+        effect: "positive" | "neutral" | "negative" | "warning"
+        summary: string
+      }
+    }[]
+    categoryBreakdown: { category: string; count: number; items: string[] }[]
+    totalDetected: number
+    seoWarnings: string[]
+    seoPositives: string[]
+  }
 }
 
 export interface FetchedData {
@@ -70,6 +87,7 @@ export interface FetchedData {
   securityTxt: string | null
   url: string
   resolvedUrl: string
+  responseHeaders: Record<string, string>
 }
 
 export interface MetaTags {
@@ -123,6 +141,12 @@ export interface SitemapAnalysis {
 
 /* ─── Site Index (persistent domain storage) ─── */
 
+export interface TechSnapshotEntry {
+  name: string
+  category: string
+  confidence: "high" | "medium" | "low"
+}
+
 export interface SiteSnapshot {
   url: string
   analyzedAt: string
@@ -137,6 +161,7 @@ export interface SiteSnapshot {
     percentage: number
     grade: "A" | "B" | "C" | "D"
   }[]
+  techStack?: TechSnapshotEntry[]
 }
 
 export interface SiteRecord {

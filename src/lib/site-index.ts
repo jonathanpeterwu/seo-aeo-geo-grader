@@ -5,6 +5,7 @@ import {
   SiteRecord,
   SiteSnapshot,
   SiteIndexSummary,
+  TechSnapshotEntry,
 } from "@/types"
 
 const DATA_DIR = join(process.cwd(), ".data")
@@ -42,6 +43,16 @@ function extractDomain(url: string): string {
 }
 
 function reportToSnapshot(report: AnalysisReport): SiteSnapshot {
+  // Persist tech stack as compact entries for history tracking
+  let techStack: TechSnapshotEntry[] | undefined
+  if (report.techStack?.technologies?.length) {
+    techStack = report.techStack.technologies.map((t) => ({
+      name: t.name,
+      category: t.category,
+      confidence: t.confidence,
+    }))
+  }
+
   return {
     url: report.url,
     analyzedAt: report.analyzedAt,
@@ -56,6 +67,7 @@ function reportToSnapshot(report: AnalysisReport): SiteSnapshot {
       percentage: c.percentage,
       grade: c.grade,
     })),
+    techStack,
   }
 }
 

@@ -9,6 +9,7 @@ import ReportDashboard from "@/components/ReportDashboard"
 import { SuggestionsPanel } from "@/components/SuggestionsPanel"
 import { AIEngineDiagnostics } from "@/components/AIEngineDiagnostics"
 import { AIDiscoveryPanel } from "@/components/AIDiscoveryPanel"
+import TechStackPanel from "@/components/TechStackPanel"
 
 function ThemeToggle() {
   const [dark, setDark] = useState(false)
@@ -225,6 +226,7 @@ function HomeContent() {
           {report.aiEngineDiagnostics && (
             <AIEngineDiagnostics diagnostics={report.aiEngineDiagnostics} />
           )}
+          <TechStackPanel report={report} />
           <SuggestionsPanel
             suggestions={suggestions}
             suggestionCount={suggestionCount}
